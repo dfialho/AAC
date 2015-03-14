@@ -42,12 +42,12 @@ begin
     -- adder
         -- entradas de 17 bits para ter o carry out
     with OP(2 downto 0) select
-        adder <=    (A(15)&A) + (B(15)&B)           when    "000",
-                    (A(15)&A) + (B(15)&B) + '1'     when    "001",
-                    (A(15)&A) + '1'                 when    "011",
-                    (A(15)&A) + not (B(15)&B)       when    "100",
-                    (A(15)&A) + not (B(15)&B) +'1'  when    "101",
-                    (A(15)&A) - 1                   when    "110",
+        adder <=    ('0'&A) + ('0'&B)           when    "000",
+                    ('0'&A) + ('0'&B) + '1'     when    "001",
+                    ('0'&A) + '1'                 when    "011",
+                    ('0'&A) + not ('0'&B)       when    "100",
+                    ('0'&A) + not ('0'&B) +'1'  when    "101",
+                    ('0'&A) - 1                   when    "110",
                     X"0000"&'0'                     when others;
 
     -- constantes -- A é o valor do registo C e B é a constante.
