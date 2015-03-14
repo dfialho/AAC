@@ -5,7 +5,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 
 entity ALU is
-    Port ( 
+    Port (
             -- entradas e saídas a maiúsculas
             OP          : in  STD_LOGIC_VECTOR (4 downto 0);
             A           : in  STD_LOGIC_VECTOR (15 downto 0);
@@ -14,7 +14,7 @@ entity ALU is
 
             -- ordem dos bits da flag: S O C Z
             FLAGS       : out  STD_LOGIC_VECTOR (3 downto 0)
-        );             
+        );
 end ALU;
 
 architecture Behavioral of ALU is
@@ -26,7 +26,7 @@ architecture Behavioral of ALU is
     signal const8, constRes             : std_logic_vector (15 downto 0);
     signal shifted, ones_zeros          : std_logic_vector (15 downto 0);
     signal fast_ops, result             : std_logic_vector (15 downto 0);
-    
+
     signal adder                        : std_logic_vector (16 downto 0);
 
 begin
@@ -51,8 +51,8 @@ begin
                     X"0000"&'0'                 when others;
 
     -- constantes -- A é o valor do registo C e B é a constante.
-    const8      <= A(15 downto 8) & B(7 downto 0) when OP(0)='0' else B(15 downto 8) & A(7 downto 0);     
-    constRes    <= B when OP(1)='0' else const8;
+    const8      <= B(15 downto 8) & A(7 downto 0) when OP(0)='0' else A(15 downto 8) & B(7 downto 0);
+    constRes    <= A when OP(1)='0' else const8;
 
     -- shifts
     shifted     <= A(14 downto 0)&'0' when OP(0)='0' else A(15)&A(15 downto 1);
@@ -77,7 +77,7 @@ begin
     FLAGS(0) <= '1' when result = X"0000" else '0';
 
     --  escolher o sinal de controlo para o mux de saída (não sei se isto cria lógica como quero ou se faz um mux)
-    with OP select 
+    with OP select
         sel_ops <=  "000"   when "01000", -- SHIFT
                     "000"   when "01001", -- SHIFT
                     "001"   when "01100", -- CONST
