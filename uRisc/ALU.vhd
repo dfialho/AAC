@@ -32,12 +32,12 @@ architecture Behavioral of ALU is
 begin
 
     -- selects (choose between input and not input)
-    sel_A <= OP(4) and ((not OP(3) and OP(2)) or (not OP(1) and OP(0)));
-    sel_B <= OP(4) and ((not OP(2) and OP(0)) or (not OP(3) and (OP(1) and not OP(0))));
+    sel_A <= OP(4) and ((OP(3) and not OP(2)) or (OP(1) and not OP(0)));
+    sel_B <= OP(4) and ((OP(3) and OP(2)) or (not OP(1) and not OP(0)));
 
     -- muxes -- acho que não é preciso declarar como XOR (mais eficiente)
-    mux_A <= not A when sel_A = '0' else A;
-    mux_B <= not B when sel_B = '0' else B;
+    mux_A <= A when sel_A = '0' else not A;
+    mux_B <= B when sel_B = '0' else not B;
 
     -- adder
         -- entradas de 17 bits para ter o carry out

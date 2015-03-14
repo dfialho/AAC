@@ -169,7 +169,7 @@ BEGIN
         OP <= "11101"; 
         wait for clk_period;
         -- not A or not B
-        OP <= "11101"; 
+        OP <= "11110"; 
         wait for clk_period;
       -- AND
         -- A and B
