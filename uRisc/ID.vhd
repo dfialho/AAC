@@ -69,7 +69,7 @@ begin
 -- RA <= Instr(5 downto 3)
 -- RB <= Instr(2 downto 0)
 
-	OP <= "00111" when class = "01" else
+	OP <= "01100" when class = "01" else
 				"01110" when class = "11" and Instr(10) = '0' else
 				"01111" when class = "11" and Instr(10) = '1' else
 				Instr(10 downto 6);
