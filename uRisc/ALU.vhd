@@ -59,7 +59,7 @@ begin
     shifted_out <= A(15) when OP(0)='0' else A(0);
 
     --  ones / zeros (confirmado que é optimizado e expande OP(0) para os 16 fios)
-    ones_zeros <= X"0000" when OP(0) = '1' else X"FFFF";
+    ones_zeros <= X"0000" when OP(0) = '0' else X"FFFF";
 
     -- logic ops
     or_op   <= mux_A or mux_B;
