@@ -252,14 +252,15 @@ begin
         A => alu_A,
         B => reg_B,
         C_OUTPUT => alu_S,
-        FLAGS => flags
+        FLAGS => alu_flags
     );            
 
 	-- registo das flags
 	process(clk)
 	begin
 		if clk'event and clk = '1' then
-			flags <= alu_flags;
+			-- flags: Z N C V alu_flags: N V C Z
+			flags <= alu_flags(0) & alu_flags(3) & alu_flags(1) & alu_flags(2);
 		end if;
 	end process;
 
