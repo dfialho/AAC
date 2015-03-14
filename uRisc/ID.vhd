@@ -48,7 +48,6 @@ entity ID is
 		sel_out   : out std_logic_vector(1 downto 0);
 		mux_A     : out std_logic;
 		mux_B     : out std_logic;
-		R_const   : out std_logic;
 		destiny_JMP: out std_logic_vector(15 downto 0)
 	);
 end ID;
@@ -99,8 +98,6 @@ begin
 					 Instr(7)&Instr(7 downto 0) when class = "11" else
 					 X"0000";
 
--- Format 2 R select
-	R_const <= Instr(10);
 
 ----------------------------- Control ------------------------------------------
 -- Control Instruction Format:
@@ -136,7 +133,7 @@ begin
 
 --------------------------- Write Enable ---------------------------------------
 
-	WE <= '1' when (class = "01" or (class = "10" and Instr(10 downto 6) /= "01010" and 
+	WE <= '1' when (class = "01" or (class = "10" and Instr(10 downto 6) /= "01010" and
 				Instr(10 downto 6) /= "01011") or class = "11") or
 				(class = "00" and Instr(11) = '0' and Instr(13 downto 12) = "11") else
 				'0';
@@ -149,7 +146,7 @@ begin
 -- 11 => Don't Care (X)
 
 	sel_out <= "10" when Instr(11) = '0' and class = "00" else
-						 "00" when class = "01" or class = "11" or (class = "10" 
+						 "00" when class = "01" or class = "11" or (class = "10"
 						 and Instr(10 downto 6) /= "01010") else
 						 "01" when class = "10" and Instr(10 downto 6) = "01010" else
  						 "11";
