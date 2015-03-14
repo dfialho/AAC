@@ -1,5 +1,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -27,7 +29,7 @@ entity Data_RAM is
     );
 end entity;
 
-architecture Behavorial of ram is
+architecture Behavorial of Data_RAM is
 	type RAM is array (0 to (2**ADDR_WIDTH)-1) of STD_LOGIC_VECTOR(15 downto 0);
 	shared variable mem : RAM := (others => X"0000");
 begin
@@ -35,7 +37,7 @@ begin
 	process (clk) begin
         if clk'event and clk = '1' then
         	if we = '1' then
-        		mem(conv_integer(address)) <= data_in;
+        		mem(conv_integer(address)) := data_in;
         	end if;
         	data_out <= mem(conv_integer(address));
         end if;
