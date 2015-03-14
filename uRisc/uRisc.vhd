@@ -41,6 +41,17 @@ end uRisc;
 architecture Behavioral of uRisc is
 	
 	-- memoria de instrucoes (ROM)
+	component DualPortMemory is
+		Generic(
+	    	ADDR_SIZE : positive := 16
+	  	);
+	  	Port(
+		    clk : in std_logic;
+		    addr: in std_logic_vector(ADDR_SIZE - 1 downto 0);
+		    do  : out std_logic_vector(15 downto 0)
+	  	);
+	end component;
+
 	-- decoder
 	-- bloco de verificacao de condicao de salto
 	-- register file
@@ -107,7 +118,14 @@ begin
 	pc_next <= pc_jmp when sel_PC = '1' else reg_B;
 
 	-- memoria de instrucoes
-
+	Inst_rom : DualPortMemory port map (
+        -- Input
+        addr => pc,
+        clk => clk,
+        -- Output
+        do => instr
+	);
+	
 	-- decoder
 
 	-- file register
