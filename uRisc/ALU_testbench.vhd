@@ -96,7 +96,8 @@ BEGIN
   
   		A <= X"0001";
   		B <= X"FFF0";
-  		
+  -- 27 ALU operations:
+
     -- ADDER
       -- A + B
       OP <= "00000";
@@ -114,7 +115,8 @@ BEGIN
       OP <= "00101"; 
       wait for clk_period;
       -- A - 1
-      OP <= "00110"; 
+      OP <= "00110";
+      wait for clk_period; 
 
     -- SHIFTS
       -- SLL
@@ -167,7 +169,7 @@ BEGIN
         OP <= "11101"; 
         wait for clk_period;
         -- not A or not B
-        OP <= "11101"; 
+        OP <= "11110"; 
         wait for clk_period;
       -- AND
         -- A and B
@@ -183,10 +185,10 @@ BEGIN
         OP <= "11000"; 
         wait for clk_period;
       -- XOR
-        -- positive
+        -- XOR
         OP <= "10110"; 
         wait for clk_period;
-        -- negative
+        -- XNOR
         OP <= "11001"; 
         wait for clk_period;
 
