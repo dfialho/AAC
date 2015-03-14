@@ -4,11 +4,10 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity DualPortMemory is
   Generic(
-    ADDR_SIZE : positive := 16;
+    ADDR_SIZE : positive := 16
   );
   Port(
     clk : in std_logic;
-    we  : in std_logic;
     addr: in std_logic_vector(ADDR_SIZE - 1 downto 0);
     do  : out std_logic_vector(15 downto 0)
   );
