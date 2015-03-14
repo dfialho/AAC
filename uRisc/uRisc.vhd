@@ -53,6 +53,27 @@ architecture Behavioral of uRisc is
 	end component;
 
 	-- decoder
+	COMPONENT ID
+    	PORT(
+    		--Inputs 
+			Instr : IN  std_logic_vector(15 downto 0);		-- instrucao de entrada
+			-- Outputs
+			WE : OUT  std_logic;							-- write enable do register	file
+			RA : OUT  std_logic_vector(2 downto 0);			-- selecao do registo A
+			RB : OUT  std_logic_vector(2 downto 0);			-- selecao do registo B
+			WC : OUT  std_logic_vector(2 downto 0);			-- selecao do registo C de escrita
+			OP : OUT  std_logic_vector(4 downto 0);			-- opcode de 5 bits
+			const : OUT  std_logic_vector(15 downto 0);		-- valor para as operacoes de constantes
+			cond_JMP : OUT  std_logic_vector(3 downto 0);	-- sinal de condicao de jump
+			mem_write : OUT  std_logic;						-- write enable da memoria de dados
+			OP_JMP : OUT  std_logic_vector(1 downto 0);		-- op de condicao
+			sel_out : OUT  std_logic_vector(1 downto 0);	-- seleciona o mux a entrada do file register
+			mux_A : OUT  std_logic;							-- seleciona a entrada A da ALU
+			mux_B : OUT  std_logic;							-- seleciona a entrada B da ALU
+			destiny_JMP : OUT  std_logic_vector(15 downto 0)-- sinal para somar ao PC + 1 (IMM)
+        );
+    END COMPONENT;
+
 	-- bloco de verificacao de condicao de salto
 	-- register file
 	-- memoria de dados (RAM)
@@ -125,8 +146,27 @@ begin
         -- Output
         do => instr
 	);
-	
+
 	-- decoder
+	Inst_decoder : ID port map (
+		--Inputs 
+		Instr => instr,			-- instrucao de entrada
+		-- Outputs
+		WE => reg_we, 			-- write enable do register	file
+		RA => sel_reg_A,		-- selecao do registo A
+		RB => sel_reg_B,		-- selecao do registo B
+		WC => sel_reg_C,		-- selecao do registo C de escrita
+		OP => alu_OP,			-- opcode de 5 bits
+		const => const,			-- valor para as operacoes de constantes
+		cond_JMP => cond_jmp,		-- sinal de condicao de jump
+		mem_write => mem_we,	-- wirte enable da memoria de dados
+		OP_JMP => op_jmp,		-- op de condicao
+		sel_out => sel_data,	-- seleciona o mux a entrada do file register
+		mux_A => sel_A,			-- seleciona a entrada A da ALU
+		mux_B => open,			-- seleciona a entrada B da ALU
+		destiny_JMP => jmp 		-- sinal para somar ao PC + 1 (IMM)
+	);
+
 
 	-- file register
 
