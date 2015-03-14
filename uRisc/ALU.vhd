@@ -44,11 +44,11 @@ begin
     with OP(2 downto 0) select
         adder <=    ('0'&A) + ('0'&B)           when    "000",
                     ('0'&A) + ('0'&B) + '1'     when    "001",
-                    ('0'&A) + '1'                 when    "011",
+                    ('0'&A) + '1'               when    "011",
                     ('0'&A) + not ('0'&B)       when    "100",
                     ('0'&A) + not ('0'&B) +'1'  when    "101",
-                    ('0'&A) - 1                   when    "110",
-                    X"0000"&'0'                     when others;
+                    ('0'&A) - 1                 when    "110",
+                    X"0000"&'0'                 when others;
 
     -- constantes -- A é o valor do registo C e B é a constante.
     const8      <= A(15 downto 8) & B(7 downto 0) when OP(0)='0' else B(15 downto 8) & A(7 downto 0);     
