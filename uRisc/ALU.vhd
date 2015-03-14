@@ -52,13 +52,13 @@ begin
 
     -- constantes -- A é o valor do registo C e B é a constante.
     const8      <= A(15 downto 8) & B(7 downto 0) when OP(0)='0' else B(15 downto 8) & A(7 downto 0);     
-    constRes    <= "00000" & B(10 downto 0) when OP(1)='0' else const8;
+    constRes    <= B when OP(1)='0' else const8;
 
     -- shifts
     shifted     <= A(14 downto 0)&'0' when OP(0)='0' else A(15)&A(15 downto 1);
     shifted_out <= A(15) when OP(0)='0' else A(0);
 
-    --  ones / zeros
+    --  ones / zeros (confirmado que é optimizado e expande OP(0) para os 16 fios)
     ones_zeros <= X"0000" when OP(0) = '1' else X"FFFF";
 
     -- logic ops
