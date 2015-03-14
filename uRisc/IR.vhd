@@ -31,7 +31,7 @@ architecture Behavioral of DualPortMemory is
   others => X"0000"); -- value for all addresses not previously defined
   -- declare the signal correspondent to the RAM memory
   -- ... and define an initial value
-  shared variable myRAM : MEM_TYPE := InitValue0;
+  shared variable RAM : MEM_TYPE := InitValue;
 
 begin
 
