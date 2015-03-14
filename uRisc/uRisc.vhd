@@ -108,6 +108,20 @@ architecture Behavioral of uRisc is
 		);
 	end component;
 
+	-- ALU
+	component ALU
+    	Port ( 
+            -- entradas e saídas a maiúsculas
+            OP          : in  STD_LOGIC_VECTOR (4 downto 0);
+            A           : in  STD_LOGIC_VECTOR (15 downto 0);
+            B           : in  STD_LOGIC_VECTOR (15 downto 0);
+            C_OUTPUT    : out  STD_LOGIC_VECTOR (15 downto 0);
+
+            -- ordem dos bits da flag: S O C Z
+            FLAGS       : out  STD_LOGIC_VECTOR (3 downto 0)
+        );             
+	end component;
+
 	-- memoria de dados (RAM)
 
 	-- registo do PC
@@ -217,6 +231,14 @@ begin
 	alu_A <= reg_A when sel_A = '1' else const;
 
 	-- ALU
+	Inst_ALU : ALU port map (
+        -- entradas e saídas a maiúsculas
+        OP => alu_OP,
+        A => alu_A,
+        B => reg_B,
+        C_OUTPUT => alu_S,
+        FLAGS => flags
+    );            
 
 	-- registo das flags
 	process(clk)
