@@ -92,6 +92,22 @@ architecture Behavioral of uRisc is
 	end component;
 
 	-- register file
+	component Reg 
+		Port (
+			-- Input
+			RC   : in std_logic_vector(2 downto 0);
+			RA   : in std_logic_vector(2 downto 0);
+			RB   : in std_logic_vector(2 downto 0);
+			WE   : in std_logic;
+			clk  : in std_logic;
+			data : in std_logic_vector(15 downto 0);
+
+			-- Ouput
+			A_out : out std_logic_vector(15 downto 0);
+			B_out : out std_logic_vector(15 downto 0)
+		);
+	end component;
+
 	-- memoria de dados (RAM)
 
 	-- registo do PC
@@ -184,6 +200,18 @@ begin
 	);
 
 	-- file register
+	Inst_file_regiser : Reg port map (
+		-- Input
+		RC => sel_reg_C,
+		RA => sel_reg_A,
+		RB => sel_reg_B,
+		WE => reg_we,
+		clk => clk,
+		data => reg_C,
+		-- Ouput
+		A_out => reg_A,
+		B_out => reg_B
+	);
 
 	-- mux de selecao da entrada A da ALU
 	alu_A <= reg_A when sel_A = '1' else const;
