@@ -35,8 +35,8 @@ entity ALU is
     Port ( 
     			clk		: in std_logic; 
     			OP 		: in  STD_LOGIC_VECTOR (4 downto 0);
-           	A_input	: in  STD_LOGIC_VECTOR (15 downto 0);
-           	B_input	: in  STD_LOGIC_VECTOR (15 downto 0);
+           	A	: in  STD_LOGIC_VECTOR (15 downto 0);
+           	B	: in  STD_LOGIC_VECTOR (15 downto 0);
            	C_output	: out  STD_LOGIC_VECTOR (15 downto 0);
            	Flags 	: out  STD_LOGIC_VECTOR (7 downto 0));
 end ALU;
@@ -48,18 +48,9 @@ architecture Behavioral of ALU is
 	signal or_op, and_op, xor_op 	: std_logic_vector (15 downto 0);
 	signal mux_A, mux_B 				: std_logic_vector (15 downto 0);
 	signal shifted, const, adder	: std_logic_vector (15 downto 0);
-	signal A, B, result		: std_logic_vector (15 downto 0);
+	signal result			: std_logic_vector (15 downto 0);
 
 begin
-	
-	-- registos de delay do contador --
-	process(clk)
-	begin
-		if clk'event and clk='1' then
-			A <= A_input;
-			B <= B_input;
-		end if;
-	end process;
 
 	-- selects (choose between input and not input)
 	sel_A <= OP(4) and ((not OP(3) and OP(2)) or (not OP(1) and OP(0)));
@@ -68,11 +59,11 @@ begin
 	-- adder
 	with OP(2 downto 0) select
 		adder <= A + B 		when	"000",
-					A + B + 1 	when	"001",
-					A + 1 		when	"011",
-					A - B -1 	when	"100",
-					A - B 		when	"101",
-					A - B -1    when 	"110",
+					A + B + '1' 	when	"001",
+					A + '1' 		when	"011",
+					A + not B  	when	"100",
+					A + not B +'1' 		when	"101",
+					A - 1    when 	"110",
 					X"0000" 		when others;
 
 	-- shifts
