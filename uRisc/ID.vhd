@@ -119,10 +119,10 @@ begin
 	OP_JMP <= Instr(13 downto 12);
 
 ---- Jump condition
--- If the operation lacks a condition, signal "0000" will be sent by default.
+-- If the operation lacks a condition, signal "1000" will be sent by default.
 	cond_JMP <= Instr(11 downto 8) when class = "00" and
 	 						(Instr(13 downto 12) = "00" or Instr(13 downto 12) = "01") else
-							"0000";
+							"1000";
 
 -- Jump Destiny
 	destiny_JMP <= Instr(7)&Instr(7)&Instr(7)&Instr(7)&Instr(7)&Instr(7)&
@@ -157,14 +157,7 @@ begin
 -- Selects Register when instruction class is ALU or Memory else
 -- selects constant
 
-	mux_A <= '1' when class = "10" else
-					 '0';
-
-------------------------- Select ALU B Input -----------------------------------
--- Selects Register when instruction class is ALU or Memory else
--- selects constant
-
-	mux_B <= '1' when class = "10" or class = "11" else
+	mux_A <= '1' when class = "10" or class = "11" else
 					 '0';
 
 ------------------------ Memory Write Enable -----------------------------------
