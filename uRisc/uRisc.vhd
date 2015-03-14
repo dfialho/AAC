@@ -75,6 +75,22 @@ architecture Behavioral of uRisc is
     END COMPONENT;
 
 	-- bloco de verificacao de condicao de salto
+	component CheckCond 
+		Port (
+			-- Inputs 
+	    	clk : in  std_logic;
+			cond : in  std_logic_vector (3 downto 0);
+			flag_zero : in  std_logic;		-- Z
+			flag_negative : in  std_logic;	-- N
+			flag_carry : in  std_logic;		-- C
+			flag_overflow : in  std_logic;	-- V
+			opcode : in  std_logic_vector (1 downto 0);
+			
+			-- Outputs
+			sel_PC : out  std_logic
+		);
+	end component;
+
 	-- register file
 	-- memoria de dados (RAM)
 
@@ -167,7 +183,6 @@ begin
 		destiny_JMP => jmp 		-- sinal para somar ao PC + 1 (IMM)
 	);
 
-
 	-- file register
 
 	-- mux de selecao da entrada A da ALU
@@ -184,6 +199,18 @@ begin
 	end process;
 
 	-- bloco de verificacao de condicao de salto
+	Inst_CheckCond : CheckCond port map (
+		-- Inputs 
+    	clk => clk,
+		cond => cond_jmp,
+		flag_zero => flags(3),
+		flag_negative => flags(2),
+		flag_carry => flags(1),
+		flag_overflow => flags(0),
+		opcode => op_jmp,
+		-- Outputs
+		sel_PC => sel_PC
+	);
 
 	-- memoria de dados
 
