@@ -123,6 +123,21 @@ architecture Behavioral of uRisc is
 	end component;
 
 	-- memoria de dados (RAM)
+	component Data_RAM
+		generic (
+			DATA_WIDTH :integer := 16;
+	        ADDR_WIDTH :integer := 16
+	    );
+	    port (
+	    	-- inputs
+			clk     : in std_logic;                                	-- clock
+			address : in std_logic_vector (ADDR_WIDTH-1 downto 0); 	-- address
+			data_in : in std_logic_vector (DATA_WIDTH-1 downto 0); 	-- data input
+			we      : in std_logic;                                	-- write enable
+			-- outputs
+			data_out : out std_logic_vector(DATA_WIDTH-1 downto 0)	-- data output
+	    );
+	end component;
 
 	-- registo do PC
 	signal pc : std_logic_vector(15 downto 0) := (others => '0');		-- valor do PC actual
@@ -263,6 +278,15 @@ begin
 	);
 
 	-- memoria de dados
+	Inst_data_ram : Data_RAM port map (
+    	-- inputs
+		clk => clk,
+		address => reg_A,
+		data_in => reg_B,
+		we => mem_we,
+		-- outputs
+		data_out => mem_data_out
+    );
 
 	-- mux de selecao de entrada do register file
 	with sel_data select
