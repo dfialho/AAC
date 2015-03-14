@@ -36,18 +36,18 @@ entity ID is
 		clk   : in std_logic;
 
 		-- Output
-		WE        : out std_logic;
-		RA        : out std_logic_vector(2 downto 0);
-		RB        : out std_logic_vector(2 downto 0);
-		WC        : out std_logic_vector(2 downto 0);
-		OP        : out std_logic_vector(4 downto 0);
-		const     : out std_logic_vector(15 downto 0);
-		cond_JMP  : out std_logic_vector(3 downto 0);
-		mem_write : out std_logic;
-		OP_JMP    : out std_logic_vector(1 downto 0);
-		sel_out   : out std_logic_vector(1 downto 0);
-		mux_A     : out std_logic;
-		mux_B     : out std_logic;
+		WE         : out std_logic;
+		RA         : out std_logic_vector(2 downto 0);
+		RB         : out std_logic_vector(2 downto 0);
+		WC         : out std_logic_vector(2 downto 0);
+		OP         : out std_logic_vector(4 downto 0);
+		const      : out std_logic_vector(15 downto 0);
+		cond_JMP   : out std_logic_vector(3 downto 0);
+		mem_write  : out std_logic;
+		OP_JMP     : out std_logic_vector(1 downto 0);
+		sel_out    : out std_logic_vector(1 downto 0);
+		mux_A      : out std_logic;
+		mux_B      : out std_logic;
 		destiny_JMP: out std_logic_vector(15 downto 0)
 	);
 end ID;
@@ -117,10 +117,10 @@ begin
 	OP_JMP <= Instr(13 downto 12);
 
 ---- Jump condition
--- If the operation lacks a condition, signal "1000" will be sent by default.
+-- If the operation lacks a condition, signal "0000" will be sent by default.
 	cond_JMP <= Instr(11 downto 8) when class = "00" and
 	 						(Instr(13 downto 12) = "00" or Instr(13 downto 12) = "01") else
-							"1000";
+							"0000";
 
 -- Jump Destiny
 	destiny_JMP <= Instr(7)&Instr(7)&Instr(7)&Instr(7)&Instr(7)&Instr(7)&
