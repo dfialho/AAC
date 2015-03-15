@@ -87,7 +87,7 @@ architecture Behavioral of uRisc is
 			opcode : in  std_logic_vector (1 downto 0);
 			
 			-- Outputs
-			sel_PC : out  std_logic
+			sel_PC : out  std_logic_vector(1 downto 0)
 		);
 	end component;
 
@@ -147,7 +147,7 @@ architecture Behavioral of uRisc is
 	-- sinais de ligacao do bloco de verificacao de condicao de salto
 	signal cond_jmp : std_logic_vector(3 downto 0) := (others => '0');	-- sinal que indica a condicao de salto
 	signal op_jmp : std_logic_vector(1 downto 0) := (others => '0');	-- codigo de operacao de salto	
-	signal sel_PC : std_logic := '0';									-- sinal de selecao do proximo PC
+	signal sel_PC : std_logic_vector(1 downto 0) := (others => '0');	-- sinal de selecao do proximo PC
 
 	-- sinais de ligacao relacionados com o PC
 	signal pc_next : std_logic_vector(15 downto 0) := (others => '0');	-- proximo valor a guardar no registo do PC
@@ -197,7 +197,11 @@ begin
 	pc_jmp <= pc_inc + jmp;
 
 	-- mux de selecao do proximo PC
-	pc_next <= pc_jmp when sel_PC = '1' else reg_B;
+	with sel_PC select
+	pc_next <=	pc_inc 	when "00",
+				pc_jmp 	when "01",
+				reg_B 	when "11",
+				X"0000" when others;
 
 	-- memoria de instrucoes
 	Inst_rom : DualPortMemory port map (
