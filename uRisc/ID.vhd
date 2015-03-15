@@ -115,7 +115,8 @@ begin
 -- RB <= Instr(2 downto 0)
 
 ---- Jump operation
-	OP_JMP <= Instr(13 downto 12);
+	OP_JMP <= Instr(13 downto 12) when class = "00" else
+						"00";
 
 ---- Jump condition
 -- If the operation lacks a condition, signal "1000" will be sent by default.
