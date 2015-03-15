@@ -49,7 +49,7 @@ ARCHITECTURE behavior OF CheckCond_tb IS
          flag_carry : IN  std_logic;
          flag_overflow : IN  std_logic;
          opcode : IN  std_logic_vector(1 downto 0);
-         sel_PC : OUT  std_logic
+         sel_PC : OUT  std_logic_vector(1 downto 0)
         );
     END COMPONENT;
     
@@ -61,7 +61,7 @@ ARCHITECTURE behavior OF CheckCond_tb IS
    signal opcode : std_logic_vector(1 downto 0) := (others => '0');
 
  	--Outputs
-   signal sel_PC : std_logic;
+   signal sel_PC : std_logic_vector(1 downto 0) := (others => '0');
 
    -- Clock period definitions
    constant clk_period : time := 10 ns;

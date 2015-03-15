@@ -41,7 +41,7 @@ entity CheckCond is
 		opcode : in  std_logic_vector (1 downto 0);
 		
 		-- Outputs
-		sel_PC : out  std_logic
+		sel_PC : out  std_logic_vector(1 downto 0)
 	);
 end CheckCond;
 
@@ -65,7 +65,8 @@ begin
 	cond_op <= c2_1 when cond(2) = '1' else c2_0;
 
 	-- logica definida pelo OP
-	sel_PC <= cond(3) or ((not cond(3)) and ((cond_op xnor opcode(0)) or opcode(1)));
+	sel_PC(0) <= (not cond(3)) and ((cond_op xnor opcode(0)) or opcode(1));
+	sel_PC(1) <= (not cond(3)) and opcode(1) and opcode(0);
 
 end Behavioral;
 
