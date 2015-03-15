@@ -36,10 +36,10 @@ architecture Behavioral of DualPortMemory is
 begin
 
   -- architecture for port A
-  process (clk) begin
-    if rising_edge(clk) then
+--  process (clk) begin
+--    if rising_edge(clk) then
       do <= RAM(conv_integer(addr));
-    end if;
-  end process;
+--    end if;
+--  end process;
 
 end Behavioral;
