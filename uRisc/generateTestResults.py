@@ -25,8 +25,8 @@ print
 print "01000 - SLL            : "  + str(np.int16(A << 1))  
 print "01001 - SRA            : "  + str(np.int16(A >> 1))
 print  
-print "01100 - CONST11        : "  + str(A)
-print "01110 - CONST8L        : "  + str(A | (B & -256))
+print "01100 - CONST11        : "  + str(A & 2047)
+print "01110 - CONST8L        : "  + str((A & 255) | (B & -256))
 print "01111 - CONST8H        : "  + str((A << 8) | (B  & 255))
 print
 print "10000 - ZEROS          : "  + str(0)
