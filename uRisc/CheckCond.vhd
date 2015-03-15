@@ -50,7 +50,6 @@ architecture Behavioral of CheckCond is
 	signal cond_op : std_logic;		-- resultado obtido a partir do sinal da condicao
 	signal c2_1 : std_logic;		-- valor de cond_op quando C2 é 1
 	signal c2_0 : std_logic;		-- valor de cond_op quando C2 é 0
-	signal mux_out : std_logic;		-- sinal de saida do mux
 	
 begin
 	
@@ -63,12 +62,10 @@ begin
 	c2_1 <= (((flag_carry and cond(1)) or flag_zero) and cond(0)) or (c0_xnor_c1 and flag_negative);
 
 	-- mux 2:1 do cond_op
-	mux_out <= c2_1 when cond(2) = '1' else c2_0;
-
-	cond_op <= cond(3) or ((not cond(3)) and mux_out);
+	cond_op <= c2_1 when cond(2) = '1' else c2_0;
 
 	-- logica definida pelo OP
-	sel_PC <= (cond_op xnor opcode(0)) and opcode(1);
+	sel_PC <= cond(3) or ((not cond(3)) and ((cond_op xnor opcode(0)) or opcode(1)));
 
 end Behavioral;
 
