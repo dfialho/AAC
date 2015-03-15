@@ -157,7 +157,7 @@ begin
 -- Selects Register when instruction class is ALU or Memory else
 -- selects constant
 
-	mux_A <= '1' when class = "10" or class = "11" else
+	mux_A <= '1' when class = "10" else
 					 '0';
 
 ------------------------ Memory Write Enable -----------------------------------
