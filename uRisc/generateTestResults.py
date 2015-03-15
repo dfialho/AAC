@@ -1,28 +1,33 @@
 import sys
+import numpy as np
+
+def hex2(n):
+    #return "0x%s" % ("0000%s" % (hex(n&0xffff)[2:-1]))[-4:]
+    return hex (n & 0xffff)#[:-1]
 
 if len(sys.argv) != 3:
     print "needs 2 arguments, A and B"
     exit()
  
-A = int(sys.argv[1])
-B = int(sys.argv[2])
+A = np.int16(sys.argv[1])
+B = np.int16(sys.argv[2])
 
-print "AVISO: DEVIDO A PREGUICA ESTE SCRIPT USA INTEIROS DE 32 BITS"
-print "A: " + str(A) + "\tB: " + str(B) + '\n'
+#print "AVISO: DEVIDO A PREGUICA ESTE SCRIPT USA INTEIROS DE 32 BITS"
+print "A: " + str(A) + " (" + hex2(A) + ")" + "\tB: " + str(B) + " (" + hex2(B) + ")" +'\n'
 
-print "00000 - A+B            : "  + str(A + B) 
-print "00001 - A+B+1          : "  + str(A + B + 1)
-print "00011 - A+1            : "  + str(A + 1)
-print "00100 - A-B-1          : "  + str(A - B -1)
-print "00101 - A-B            : "  + str(A - B)  
-print "00110 - A-1            : "  + str(A - 1)
+print "00000 - A+B            : "  + str(np.int16(A + B)) 
+print "00001 - A+B+1          : "  + str(np.int16(A + B + 1))
+print "00011 - A+1            : "  + str(np.int16(A + 1))
+print "00100 - A-B-1          : "  + str(np.int16(A - B -1))
+print "00101 - A-B            : "  + str(np.int16(A - B))  
+print "00110 - A-1            : "  + str(np.int16(A - 1))
 print
-print "01000 - SLL            : "  + str(A << 1)  
-print "01001 - SRA            : "  + str(A >> 1)
-print
-print "01100 - CONST11        : "  + str(B)
-print "01110 - CONST8L        : "  + str(B & 0x00FF)
-print "01111 - CONST8H        : "  + str(B & 0xFF00)
+print "01000 - SLL            : "  + str(np.int16(A << 1))  
+print "01001 - SRA            : "  + str(np.int16(A >> 1))
+print  
+print "01100 - CONST11        : "  + str(A)
+print "01110 - CONST8L        : "  + str(A | (B & -256))
+print "01111 - CONST8H        : "  + str((A << 8) | (B  & 255))
 print
 print "10000 - ZEROS          : "  + str(0)
 print "11111 - ONES           : "  + str(-1)
