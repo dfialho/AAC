@@ -65,8 +65,8 @@ begin
 	cond_op <= c2_1 when cond(2) = '1' else c2_0;
 
 	-- logica definida pelo OP
-	sel_PC(0) <= (not cond(3)) and ((cond_op xnor opcode(0)) or opcode(1));
-	sel_PC(1) <= (not cond(3)) and opcode(1) and opcode(0);
+	sel_PC(0) <= opcode(1) or ((not cond(3)) and (not opcode(1)) and (opcode(0) xnor cond_op));
+	sel_PC(1) <= opcode(1) and opcode(0) ;
 
 end Behavioral;
 
