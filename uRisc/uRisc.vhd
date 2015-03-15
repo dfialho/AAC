@@ -69,7 +69,6 @@ architecture Behavioral of uRisc is
 			OP_JMP : OUT  std_logic_vector(1 downto 0);		-- op de condicao
 			sel_out : OUT  std_logic_vector(1 downto 0);	-- seleciona o mux a entrada do file register
 			mux_A : OUT  std_logic;							-- seleciona a entrada A da ALU
-			mux_B : OUT  std_logic;							-- seleciona a entrada B da ALU
 			destiny_JMP : OUT  std_logic_vector(15 downto 0)-- sinal para somar ao PC + 1 (IMM)
         );
     END COMPONENT;
@@ -228,7 +227,6 @@ begin
 		OP_JMP => op_jmp,		-- op de condicao
 		sel_out => sel_data,	-- seleciona o mux a entrada do file register
 		mux_A => sel_A,			-- seleciona a entrada A da ALU
-		mux_B => open,			-- seleciona a entrada B da ALU
 		destiny_JMP => jmp 		-- sinal para somar ao PC + 1 (IMM)
 	);
 
