@@ -59,7 +59,7 @@ begin
 	c2_0 <= ((flag_overflow and cond(0)) or (not cond(0))) and c0_xnor_c1;
 
 	-- cond_op para cond(2) = 1
-	c2_1 <= (((flag_carry and cond(1)) or flag_zero) and cond(0)) or (c0_xnor_c1 and flag_negative);
+	c2_1 <= (c0_xnor_c1 and flag_negative) or (flag_zero and cond(0)) or (flag_carry and cond(1) and (not cond(0)));
 
 	-- mux 2:1 do cond_op
 	cond_op <= c2_1 when cond(2) = '1' else c2_0;
