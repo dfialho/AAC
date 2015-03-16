@@ -69,6 +69,7 @@ architecture Behavioral of uRisc is
 			OP_JMP : OUT  std_logic_vector(1 downto 0);		-- op de condicao
 			sel_out : OUT  std_logic_vector(1 downto 0);	-- seleciona o mux a entrada do file register
 			mux_A : OUT  std_logic;							-- seleciona a entrada A da ALU
+			flags_we   : out std_logic_vector(3 downto 0);	-- write enable dos registos das flags
 			destiny_JMP : OUT  std_logic_vector(15 downto 0)-- sinal para somar ao PC + 1 (IMM)
         );
     END COMPONENT;
@@ -142,6 +143,7 @@ architecture Behavioral of uRisc is
 	signal pc : std_logic_vector(15 downto 0) := (others => '0');		-- valor do PC actual
 	-- registo das flags
 	signal flags : std_logic_vector(3 downto 0) := (others => '0'); 	-- ordem das flags: Z N C V
+	signal flags_we : std_logic_vector(3 downto 0) := (others => '0'); 	-- wirte enables dos registos da flags
 
 	-- sinais de ligacao do bloco de verificacao de condicao de salto
 	signal cond_jmp : std_logic_vector(3 downto 0) := (others => '0');	-- sinal que indica a condicao de salto
@@ -227,6 +229,7 @@ begin
 		OP_JMP => op_jmp,		-- op de condicao
 		sel_out => sel_data,	-- seleciona o mux a entrada do file register
 		mux_A => sel_A,			-- seleciona a entrada A da ALU
+		flags_we => flags_we,
 		destiny_JMP => jmp 		-- sinal para somar ao PC + 1 (IMM)
 	);
 
@@ -262,7 +265,18 @@ begin
 	begin
 		if clk'event and clk = '1' then
 			-- flags: Z N C V alu_flags: N V C Z
-			flags <= alu_flags(0) & alu_flags(3) & alu_flags(1) & alu_flags(2);
+			if flags_we(0) = '1' then
+				flags(0) <= alu_flags(2);
+			end if;
+			if flags_we(1) = '1' then
+				flags(1) <= alu_flags(1);
+			end if;
+			if flags_we(2) = '1' then
+				flags(2) <= alu_flags(3);
+			end if;
+			if flags_we(3) = '1' then
+				flags(3) <= alu_flags(0);
+			end if;
 		end if;
 	end process;
 
