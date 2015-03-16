@@ -135,7 +135,7 @@ begin
 
 --------------------------- Write Enable ---------------------------------------
 
-	WE <= '1' when (class = "01" or (class = "10" and Instr(10 downto 6) /= "01010" and
+	WE <= '1' when (class = "01" or (class = "10" and
 				Instr(10 downto 6) /= "01011") or class = "11") or
 				(class = "00" and Instr(11) = '0' and Instr(13 downto 12) = "11") else
 				'0';
