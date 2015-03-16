@@ -42,7 +42,7 @@ if getAppName() != "OK":
 completeFileName = check_args()
 filename = completeFileName[:-len(".asm")]
 
-call(["urasm", completeFileName], shell=True) 
-call(["urlink", filename + ".obj", "-o", filename + ".out"], shell=True)
+call(["./urasm " + completeFileName], shell=True) 
+call(["./urlink " + filename + ".obj" + "-o" + filename + ".out"], shell=True)
 
 print "done!"
