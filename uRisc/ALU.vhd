@@ -42,13 +42,13 @@ begin
     -- adder
         -- entradas de 17 bits para ter o carry out
     with OP(2 downto 0) select
-        adder <=    ('0'&A) + ('0'&B)           when    "000",
-                    ('0'&A) + ('0'&B) + '1'     when    "001",
-                    ('0'&A) + '1'               when    "011",
-                    ('0'&A) + not ('0'&B)       when    "100",
-                    ('0'&A) + not ('0'&B) +'1'  when    "101",
-                    ('0'&A) - 1                 when    "110",
-                    X"0000"&'0'                 when others;
+        adder <=    ('0'&A) + ('0'&B)               when    "000",
+                    ('0'&A) + ('0'&B) + '1'         when    "001",
+                    ('0'&A) + '1'                   when    "011",
+                    ('0'&A) + ('0' & not B)         when    "100",
+                    ('0'&A) + ('0' & not B) +'1'    when    "101",
+                    ('0'&A) - 1                     when    "110",
+                    X"0000"&'0'                     when others;
 
     -- constantes -- A é o valor do registo C e B é a constante.
     const8      <= B(15 downto 8) & A(7 downto 0) when OP(0)='0' else A(7 downto 0) & B(7 downto 0);     
@@ -70,7 +70,7 @@ begin
     -- S
     FLAGS(3) <= result(15);
     -- O
-    FLAGS(2) <= '0' when adder(16) = adder (15) else '1';
+    FLAGS(2) <= adder(16) xor adder (15);
     -- C
     FLAGS(1) <= adder(16) when OP(3)='1' else shifted_out;
     -- Z
