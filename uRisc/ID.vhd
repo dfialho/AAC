@@ -46,6 +46,7 @@ entity ID is
 		OP_JMP     : out std_logic_vector(1 downto 0);
 		sel_out    : out std_logic_vector(1 downto 0);
 		mux_A      : out std_logic;
+		flags_we   : out std_logic_vector(3 downto 0);
 		destiny_JMP: out std_logic_vector(15 downto 0)
 	);
 end ID;
@@ -163,5 +164,13 @@ begin
 ------------------------ Memory Write Enable -----------------------------------
 	mem_write <= '1' when class = "10" and Instr(10 downto 6) = "01011" else
 					 '0';
+
+------------------------- Flags Write Enable -----------------------------------
+-- Z N C V
+	flags_we <= "0000" when Instr(10 downto 6) = "10000" or
+							Instr(10 downto 6) = "11111" or Instr(10 downto 6) = "10011" else
+							"1100" when Instr(10) = '1' else
+							"1110" when Instr(10 downto 9) = "01" else
+							"1111";
 
 end Behavioral;
