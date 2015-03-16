@@ -167,10 +167,11 @@ begin
 
 ------------------------- Flags Write Enable -----------------------------------
 -- Z N C V
-	flags_we <= "0000" when Instr(10 downto 6) = "10000" or
-							Instr(10 downto 6) = "11111" or Instr(10 downto 6) = "10011" else
-							"1100" when Instr(10) = '1' else
-							"1110" when Instr(10 downto 9) = "01" else
+	flags_we <= "0000" when ((Instr(10 downto 6) = "10000" or
+							Instr(10 downto 6) = "11111" or Instr(10 downto 6) = "10011")
+							and class = "10") or class /= "10" else
+							"1100" when Instr(10) = '1' and class = "10" else
+							"1110" when Instr(10 downto 9) = "01" and class = "10" else
 							"1111";
 
 end Behavioral;

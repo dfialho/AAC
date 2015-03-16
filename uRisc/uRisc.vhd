@@ -143,6 +143,7 @@ architecture Behavioral of uRisc is
 	signal pc : std_logic_vector(15 downto 0) := (others => '0');		-- valor do PC actual
 	-- registo das flags
 	signal flags : std_logic_vector(3 downto 0) := (others => '0'); 	-- ordem das flags: Z N C V
+	signal flags_we : std_logic_vector(3 downto 0) := (others => '0'); 	-- wirte enables dos registos da flags
 
 	-- sinais de ligacao do bloco de verificacao de condicao de salto
 	signal cond_jmp : std_logic_vector(3 downto 0) := (others => '0');	-- sinal que indica a condicao de salto
@@ -228,6 +229,7 @@ begin
 		OP_JMP => op_jmp,		-- op de condicao
 		sel_out => sel_data,	-- seleciona o mux a entrada do file register
 		mux_A => sel_A,			-- seleciona a entrada A da ALU
+		flags_we => flags_we,
 		destiny_JMP => jmp 		-- sinal para somar ao PC + 1 (IMM)
 	);
 
