@@ -140,8 +140,8 @@ if clean == 1:
     print "cleaned up"
     exit()
 
-#call(["./urasm " + completeFileName], shell=True) 
-#call(["./urlink " + filename + ".obj " + "-o" + filename + ".out"], shell=True)
+call(["./urasm " + completeFileName], shell=True) 
+call(["./urlink " + filename + ".obj " + "-o" + filename + ".out"], shell=True)
 
 toBeWritten = cleanOutFile(filename + ".out")
 #for line in toBeWritten:
@@ -149,6 +149,6 @@ toBeWritten = cleanOutFile(filename + ".out")
 
 writeToMemory(memfile, toBeWritten)
 
-#call(["rm " + filename + ".obj " + filename + ".lis"], shell=True)
+call(["rm " + filename + ".obj " + filename + ".lis"], shell=True)
 
 print "done!"
