@@ -4,12 +4,9 @@ import platform # determine the OS
 from subprocess import call
 
 ################ Initializations #################################
-
-myAlphabet = '0123456789abcdefghijklmnopqrstuvwxyz'
-
 memfile = "IR.vhd"
 memInitLine = "  constant InitValue : MEM_TYPE := (\n"
-memEndLine  = "  others => X\"0000\");\n"
+memEndLine  = "  others => X\"0000\"); -- value for all addresses not previously defined\n"
 
 currentDir = os.path.dirname(sys.argv[0])
 if currentDir != '':
@@ -107,7 +104,7 @@ def writeToMemory(memfile, toBeWritten):
             f.close
             exit()
 
-    #write everythin to the file
+    #write everything to the file
     while line != '':
         endOfFile.append(line)
         line = f.readline()
