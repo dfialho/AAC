@@ -56,7 +56,7 @@ def cleanOutFile(filename):
             k = int(line.split(" ")[1], 16) - i        
 
             if i == int(line.split(" ")[1], 16) and i != 0:
-                return toBeWritten
+                #return toBeWritten
                 #toBeWritten.append('\t' + "others\t=> X\"0000\");")
 
             while k > 0:
