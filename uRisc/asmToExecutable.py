@@ -55,7 +55,7 @@ def cleanOutFile(filename):
         if line.split(" ")[0] == "address":
             k = int(line.split(" ")[1], 16) - i        
 
-            if i == int(line.split(" ")[1], 16) and i != 0:
+            #if i == int(line.split(" ")[1], 16) and i != 0:
                 #return toBeWritten
                 #toBeWritten.append('\t' + "others\t=> X\"0000\");")
 
