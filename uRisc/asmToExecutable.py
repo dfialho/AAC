@@ -60,6 +60,12 @@ def cleanOutFile(filename):
         if line.split(" ")[0] == "address":
             i, isData = 0, True
             
+            k = int(line.split(" ")[1], 16)
+            while k > 0:
+				RAM.append('\t' + str(i) + "\t=> X\"0000\",\n")
+				i += 1
+				k -= 1
+            
         else:
             if isData == True:
 				RAM.append('\t' + str(i) + "\t=> X\"" + line.split("\n")[0] + "\",\n")
