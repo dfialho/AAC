@@ -17,7 +17,7 @@ entity Data_RAM is
 		DATA_WIDTH :integer := 16;
         ADDR_WIDTH :integer := 16
     );
-    
+
     port (
     	-- inputs
 		clk     : in std_logic;                                	-- clock
@@ -33,14 +33,16 @@ architecture Behavorial of Data_RAM is
 	type RAM is array (0 to (2**ADDR_WIDTH)-1) of STD_LOGIC_VECTOR(15 downto 0);
 	shared variable mem : RAM := (others => X"0000");
 begin
-	
+
 	process (clk) begin
         if clk'event and clk = '1' then
         	if we = '1' then
         		mem(conv_integer(address)) := data_in;
         	end if;
-        	data_out <= mem(conv_integer(address));
         end if;
     end process;
+
+		-- leitura assíncrona
+		data_out <= mem(conv_integer(address));
 
 end architecture;
