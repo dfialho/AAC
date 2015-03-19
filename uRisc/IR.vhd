@@ -18,7 +18,7 @@ architecture Behavioral of DualPortMemory is
   -- declare a type of matrix of words... the memory
   type MEM_TYPE is array (0 to (2**ADDR_SIZE)-1) of STD_LOGIC_VECTOR(15 downto 0);
   -- declare a constant with the memory initial value
-  constant InitValue : MEM_TYPE := (
+	constant InitValue : MEM_TYPE := (
 	0	=> X"f00e",
 	1	=> X"f400",
 	2	=> X"6812",
@@ -33,9 +33,8 @@ architecture Behavioral of DualPortMemory is
 	11	=> X"0000",
 	12	=> X"2fff",
 	13	=> X"0000",
-	14	=> X"0001",
-	15	=> X"0001",
-  others => X"0000"); -- value for all addresses not previously defined
+	others => X"0000");
+  -- value for all addresses not previously defined
   -- declare the signal correspondent to the RAM memory
   -- ... and define an initial value
   shared variable RAM : MEM_TYPE := InitValue;

@@ -4,9 +4,11 @@ import platform # determine the OS
 from subprocess import call
 
 ################ Initializations #################################
-memfile = "IR.vhd"
-memInitLine = "  constant InitValue : MEM_TYPE := (\n"
-memEndLine  = "  others => X\"0000\"); -- value for all addresses not previously defined\n"
+ROMfile = "IR.vhd"
+RAMfile = "ram.vhd"
+
+memInitLine = "\tconstant InitValue : MEM_TYPE := (\n"
+memEndLine  = "\tothers => X\"0000\");\n"
 
 currentDir = os.path.dirname(sys.argv[0])
 if currentDir != '':
@@ -41,7 +43,8 @@ def check_args():
     return completeFileName, clean
 
 def cleanOutFile(filename):
-    toBeWritten = []
+    ROM = [] # programa
+    RAM = [] # dados
 
     try:
         f = open(filename, 'rU')
@@ -50,27 +53,22 @@ def cleanOutFile(filename):
         exit()
     
     lines = f.readlines()
-    i = 0
+    del lines[0] # ignore first line "adress 0000"
+    
+    i, isData = 0, False
     for line in lines:
         if line.split(" ")[0] == "address":
-            k = int(line.split(" ")[1], 16) - i        
-
-            #if i == int(line.split(" ")[1], 16) and i != 0:
-                #return toBeWritten
-                #toBeWritten.append('\t' + "others\t=> X\"0000\");")
-
-            while k > 0:
-                toBeWritten.append('\t' + str(i) + "\t=> X\"0000" + "\",\n") # NOP 
-                i += 1
-                k -= 1
+            i, isData = 0, True
             
         else:
-            toBeWritten.append('\t' + str(i) + "\t=> X\"" + line.split("\n")[0] + "\",\n")
+            if isData == True:
+				RAM.append('\t' + str(i) + "\t=> X\"" + line.split("\n")[0] + "\",\n")
+            else :
+				ROM.append('\t' + str(i) + "\t=> X\"" + line.split("\n")[0] + "\",\n")
             i += 1        
     
-    f.close()
-    
-    return toBeWritten
+    f.close()    
+    return ROM, RAM
 
 def writeToMemory(memfile, toBeWritten):
     try:
@@ -140,12 +138,9 @@ if clean == 1:
 call(["./urasm " + completeFileName], shell=True) 
 call(["./urlink " + filename + ".obj " + "-o" + filename + ".out"], shell=True)
 
-toBeWritten = cleanOutFile(filename + ".out")
-#for line in toBeWritten:
-#    print line
-
-writeToMemory(memfile, toBeWritten)
+ROM, RAM = cleanOutFile(filename + ".out")
+writeToMemory(ROMfile, ROM)
+writeToMemory(RAMfile, RAM)
 
 call(["rm " + filename + ".obj " + filename + ".lis"], shell=True)
-
 print "done!"
