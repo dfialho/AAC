@@ -70,7 +70,7 @@ begin
     -- S
     FLAGS(3) <= result(15);
     -- O
-    FLAGS(2) <= adder(16) xor adder (15);
+    FLAGS(2) <= adder(16) xor (adder (15) xor (A(15) xor B(15)));
     -- C
     FLAGS(1) <= adder(16) when OP(3)='1' else shifted_out;
     -- Z
