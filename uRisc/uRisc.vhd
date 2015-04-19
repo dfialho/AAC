@@ -110,23 +110,23 @@ architecture Behavioral of uRisc is
 
 	-- ALU
 	component ALU
-    	Port (
-            -- entradas e saídas a maiúsculas
-            OP          : in  STD_LOGIC_VECTOR (4 downto 0);
-            A           : in  STD_LOGIC_VECTOR (15 downto 0);
-            B           : in  STD_LOGIC_VECTOR (15 downto 0);
-            C_OUTPUT    : out  STD_LOGIC_VECTOR (15 downto 0);
+    Port (
+      -- entradas e saídas a maiúsculas
+      OP          : in  STD_LOGIC_VECTOR (4 downto 0);
+      A           : in  STD_LOGIC_VECTOR (15 downto 0);
+      B           : in  STD_LOGIC_VECTOR (15 downto 0);
+      C_OUTPUT    : out  STD_LOGIC_VECTOR (15 downto 0);
 
-            -- ordem dos bits da flag: S O C Z
-            FLAGS       : out  STD_LOGIC_VECTOR (3 downto 0)
-        );
+			-- ordem dos bits da flag: S O C Z
+      FLAGS       : out  STD_LOGIC_VECTOR (3 downto 0)
+    );
 	end component;
 
 	-- memoria de dados (RAM)
 	component Data_RAM
 		generic (
-			DATA_WIDTH :integer := 16;
-	        ADDR_WIDTH :integer := 16
+				DATA_WIDTH :integer := 16;
+	      ADDR_WIDTH :integer := 16
 	    );
 	    port (
 	    	-- inputs
@@ -140,7 +140,9 @@ architecture Behavioral of uRisc is
 	end component;
 
 	-- registo do PC
-	signal pc : std_logic_vector(15 downto 0) := (others => '0');		-- valor do PC actual
+	signal pc : std_logic_vector(15 downto 0) := (others => '0');									-- valor do PC actual
+	signal pc_we : std_logic;																											-- write enable do registo do PC
+
 	-- registo das flags
 	signal flags : std_logic_vector(3 downto 0) := (others => '0'); 	-- ordem das flags: Z N C V
 	signal flags_we : std_logic_vector(3 downto 0) := (others => '0'); 	-- wirte enables dos registos da flags
@@ -183,14 +185,14 @@ architecture Behavioral of uRisc is
 
 	-- sinais de registos pipeline
 	-- primeiro andar de pipeline
-	signal pipe1_instruction : std_logic(15 downto 0) := (others => '0');					-- instrução
-	signal pipe1_pc_inc : std_logic(15 downto 0) := (others => '0');							-- PC + 1
+	signal pipe1_instruction : std_logic_vector(15 downto 0) := (others => '0');					-- instrução
+	signal pipe1_pc_inc : std_logic_vector(15 downto 0) := (others => '0');							-- PC + 1
 	-- segundo andar de pipeline
-	signal pipe2_pc_inc : std_logic(15 downto 0) := (others => '0');							-- PC + 1
-	signal pipe2_jmp_cond : std_logic(3 downto 0) := (others => '0');							-- condição de salto
-	signal pipe2_jmp_op : std_logic(1 downto 0) := (others => '0');								-- operação de salto
-	signal pipe2_jmp_dest : std_logic(15 downto 0) := (others => '0');						-- destino de salto
-	signal pipe2_alu_op : std_logic(4 downto 0) := (others => '0');								-- operação da ALU
+	signal pipe2_pc_inc : std_logic_vector(15 downto 0) := (others => '0');							-- PC + 1
+	signal pipe2_jmp_cond : std_logic_vector(3 downto 0) := (others => '0');							-- condição de salto
+	signal pipe2_jmp_op : std_logic_vector(1 downto 0) := (others => '0');								-- operação de salto
+	signal pipe2_jmp_dest : std_logic_vector(15 downto 0) := (others => '0');						-- destino de salto
+	signal pipe2_alu_op : std_logic_vector(4 downto 0) := (others => '0');								-- operação da ALU
 	signal pipe2_mem_we : std_logic := '0';																				-- write enable da memória de dados
 	signal pipe2_sel_reg_C : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo de escrita (WC)
 	signal pipe2_reg_we : std_logic := '0';																				-- write enable do register file
@@ -210,15 +212,24 @@ architecture Behavioral of uRisc is
 	signal pipe3_sel_reg_A : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo A
 	signal pipe3_sel_reg_B : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo B
 
+	-- sinais de resolução de conflitos de controlo
+	signal stop_pipeline : std_logic := '0';																			-- indica se é necessário parar o pipeline
+	signal instr_to_decode : std_logic_vector(15 downto 0) := (others => '0');		-- instrução para ser descodificada
+
 begin
 
 	-- registo do PC; este registo nao precisa de enable porque esta sempre a ser actualizado
 	process(clk)
 	begin
 		if clk'event and clk = '1' then
-			pc <= pc_next;
+			if pc_we = '1' then
+				pc <= pc_next;
+			end if;
 		end if;
 	end process;
+
+	-- write enable do pc
+	pc_we <= (not stop_pipeline);
 
 	-- incrementador do PC
 	pc_inc <= pc + '1';
@@ -241,10 +252,12 @@ begin
 		end if;
 	end process;
 
+	instr_to_decode <= pipe1_instruction when stop_pipeline = '0' else X"0000";
+
 	-- decoder
 	Inst_decoder : ID port map (
 		--Inputs
-		Instr => pipe1_instruction,
+		Instr => instr_to_decode,
 		-- Outputs
 		WE => reg_we,
 		RA => sel_reg_A,
@@ -260,6 +273,9 @@ begin
 		flags_we => flags_we,
 		destiny_JMP => jmp
 	);
+
+	-- bloco que determina se é preciso parar o pipeline e deixar passar a instrução de salto condicional
+	stop_pipeline <= cond_jmp(3) nand pipe2_jmp_cond(3);
 
 	-- file register
 	Inst_file_regiser : Reg port map (
