@@ -1,20 +1,20 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    14:59:41 03/08/2015 
--- Design Name: 
--- Module Name:    uRisc - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
+-- Company:
+-- Engineer:
 --
--- Dependencies: 
+-- Create Date:    14:59:41 03/08/2015
+-- Design Name:
+-- Module Name:    uRisc - Behavioral
+-- Project Name:
+-- Target Devices:
+-- Tool versions:
+-- Description:
 --
--- Revision: 
+-- Dependencies:
+--
+-- Revision:
 -- Revision 0.01 - File Created
--- Additional Comments: 
+-- Additional Comments:
 --
 ----------------------------------------------------------------------------------
 library IEEE;
@@ -39,7 +39,7 @@ entity uRisc is
 end uRisc;
 
 architecture Behavioral of uRisc is
-	
+
 	-- memoria de instrucoes (ROM)
 	component DualPortMemory is
 		Generic(
@@ -55,7 +55,7 @@ architecture Behavioral of uRisc is
 	-- decoder
 	COMPONENT ID
     	PORT(
-    		--Inputs 
+    		--Inputs
 			Instr : IN  std_logic_vector(15 downto 0);		-- instrucao de entrada
 			-- Outputs
 			WE : OUT  std_logic;							-- write enable do register	file
@@ -75,9 +75,9 @@ architecture Behavioral of uRisc is
     END COMPONENT;
 
 	-- bloco de verificacao de condicao de salto
-	component CheckCond 
+	component CheckCond
 		Port (
-			-- Inputs 
+			-- Inputs
 	    	clk : in  std_logic;
 			cond : in  std_logic_vector (3 downto 0);
 			flag_zero : in  std_logic;		-- Z
@@ -85,14 +85,14 @@ architecture Behavioral of uRisc is
 			flag_carry : in  std_logic;		-- C
 			flag_overflow : in  std_logic;	-- V
 			opcode : in  std_logic_vector (1 downto 0);
-			
+
 			-- Outputs
 			sel_PC : out  std_logic_vector(1 downto 0)
 		);
 	end component;
 
 	-- register file
-	component Reg 
+	component Reg
 		Port (
 			-- Input
 			RC   : in std_logic_vector(2 downto 0);
@@ -110,7 +110,7 @@ architecture Behavioral of uRisc is
 
 	-- ALU
 	component ALU
-    	Port ( 
+    	Port (
             -- entradas e saídas a maiúsculas
             OP          : in  STD_LOGIC_VECTOR (4 downto 0);
             A           : in  STD_LOGIC_VECTOR (15 downto 0);
@@ -119,7 +119,7 @@ architecture Behavioral of uRisc is
 
             -- ordem dos bits da flag: S O C Z
             FLAGS       : out  STD_LOGIC_VECTOR (3 downto 0)
-        );             
+        );
 	end component;
 
 	-- memoria de dados (RAM)
@@ -147,7 +147,7 @@ architecture Behavioral of uRisc is
 
 	-- sinais de ligacao do bloco de verificacao de condicao de salto
 	signal cond_jmp : std_logic_vector(3 downto 0) := (others => '0');	-- sinal que indica a condicao de salto
-	signal op_jmp : std_logic_vector(1 downto 0) := (others => '0');	-- codigo de operacao de salto	
+	signal op_jmp : std_logic_vector(1 downto 0) := (others => '0');	-- codigo de operacao de salto
 	signal sel_PC : std_logic_vector(1 downto 0) := (others => '0');	-- sinal de selecao do proximo PC
 
 	-- sinais de ligacao relacionados com o PC
@@ -155,7 +155,7 @@ architecture Behavioral of uRisc is
 	signal pc_inc : std_logic_vector(15 downto 0) := (others => '0');	-- valor do PC + 1
 	signal pc_jmp : std_logic_vector(15 downto 0) := (others => '0');	-- sinal de PC + jump + 1
 	signal jmp : std_logic_vector(15 downto 0) := (others => '0');		-- sinal de jump
-	
+
 	-- sinais de ligacao da memoria de instrucoes
 	signal instr : std_logic_vector(15 downto 0) := (others => '0');	-- sinal com a instrucao selecionada pelo PC
 
@@ -165,7 +165,7 @@ architecture Behavioral of uRisc is
 	signal sel_reg_B : std_logic_vector(2 downto 0) := (others => '0');	-- sinal de selecao do registo B
 	signal reg_B : std_logic_vector(15 downto 0) := (others => '0');	-- sinal do registo B
 	signal sel_reg_C : std_logic_vector(2 downto 0) := (others => '0');	-- sinal de selecao do registo de escrica RC
-	signal reg_C : std_logic_vector(15 downto 0) := (others => '0');	-- sinal do registo C de escrita
+	signal reg_data : std_logic_vector(15 downto 0) := (others => '0');	-- sinal do registo C de escrita
 	signal reg_we : std_logic := '0';									-- write enable do register file
 	signal sel_data : std_logic_vector(1 downto 0) := (others => '0');	-- sinal que seleciona a origem dos dados a
 																		-- armazenar no register file
@@ -181,8 +181,37 @@ architecture Behavioral of uRisc is
 	signal alu_S : std_logic_vector(15 downto 0) := (others => '0');	-- resultado da operacao da ALU
 	signal const : std_logic_vector(15 downto 0) := (others => '0');	-- valor da constante para a ALU
 
+	-- sinais de registos pipeline
+	-- primeiro andar de pipeline
+	signal pipe1_instruction : std_logic(15 downto 0) := (others => '0');					-- instrução
+	signal pipe1_pc_inc : std_logic(15 downto 0) := (others => '0');							-- PC + 1
+	-- segundo andar de pipeline
+	signal pipe2_pc_inc : std_logic(15 downto 0) := (others => '0');							-- PC + 1
+	signal pipe2_jmp_cond : std_logic(3 downto 0) := (others => '0');							-- condição de salto
+	signal pipe2_jmp_op : std_logic(1 downto 0) := (others => '0');								-- operação de salto
+	signal pipe2_jmp_dest : std_logic(15 downto 0) := (others => '0');						-- destino de salto
+	signal pipe2_alu_op : std_logic(4 downto 0) := (others => '0');								-- operação da ALU
+	signal pipe2_mem_we : std_logic := '0';																				-- write enable da memória de dados
+	signal pipe2_sel_reg_C : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo de escrita (WC)
+	signal pipe2_reg_we : std_logic := '0';																				-- write enable do register file
+	signal pipe2_sel_data : std_logic_vector(1 downto 0) := (others => '0');			-- selector da origem do dados a escrever no RF
+	signal pipe2_A : std_logic_vector(15 downto 0) := (others => '0');						-- operando A da ALU
+	signal pipe2_B : std_logic_vector(15 downto 0) := (others => '0');						-- operando B da ALU
+	signal pipe2_flags_we : std_logic_vector(3 downto 0) := (others => '0');			-- write enables das flags (Z N C V)
+	signal pipe2_sel_reg_A : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo A
+	signal pipe2_sel_reg_B : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo B
+	-- terceiro andar de pipeline
+	signal pipe3_alu_s : std_logic_vector(15 downto 0) := (others => '0');				-- resultado da operação da ALU
+	signal pipe3_pc_inc : std_logic_vector(15 downto 0) := (others => '0');				-- PC + 1
+	signal pipe3_sel_data : std_logic_vector(1 downto 0) := (others => '0');			-- selector da origem do dados a escrever no RF
+	signal pipe3_mem_data_out : std_logic_vector(15 downto 0) := (others => '0');	-- dados de saida da memória
+	signal pipe3_reg_we : std_logic := '0';																				-- write enable do register file
+	signal pipe3_sel_reg_C : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo de escrita (WC)
+	signal pipe3_sel_reg_A : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo A
+	signal pipe3_sel_reg_B : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo B
+
 begin
-	
+
 	-- registo do PC; este registo nao precisa de enable porque esta sempre a ser actualizado
 	process(clk)
 	begin
@@ -194,16 +223,6 @@ begin
 	-- incrementador do PC
 	pc_inc <= pc + '1';
 
-	-- somador do PC + 1 + jp
-	pc_jmp <= pc_inc + jmp;
-
-	-- mux de selecao do proximo PC
-	with sel_PC select
-	pc_next <=	pc_inc 	when "00",
-				pc_jmp 	when "01",
-				reg_B 	when "11",
-				X"0000" when others;
-
 	-- memoria de instrucoes
 	Inst_rom : DualPortMemory port map (
         -- Input
@@ -213,35 +232,44 @@ begin
         do => instr
 	);
 
+	-- primeiro andar de pipeline
+	process(clk)
+	begin
+		if clk'event and clk = '1' then
+			pipe1_instruction <= instr;
+			pipe1_pc_inc <= pc_inc;
+		end if;
+	end process;
+
 	-- decoder
 	Inst_decoder : ID port map (
-		--Inputs 
-		Instr => instr,			-- instrucao de entrada
+		--Inputs
+		Instr => pipe1_instruction,
 		-- Outputs
-		WE => reg_we, 			-- write enable do register	file
-		RA => sel_reg_A,		-- selecao do registo A
-		RB => sel_reg_B,		-- selecao do registo B
-		WC => sel_reg_C,		-- selecao do registo C de escrita
-		OP => alu_OP,			-- opcode de 5 bits
-		const => const,			-- valor para as operacoes de constantes
-		cond_JMP => cond_jmp,		-- sinal de condicao de jump
-		mem_write => mem_we,	-- wirte enable da memoria de dados
-		OP_JMP => op_jmp,		-- op de condicao
-		sel_out => sel_data,	-- seleciona o mux a entrada do file register
-		mux_A => sel_A,			-- seleciona a entrada A da ALU
+		WE => reg_we,
+		RA => sel_reg_A,
+		RB => sel_reg_B,
+		WC => sel_reg_C,
+		OP => alu_OP,
+		const => const,
+		cond_JMP => cond_jmp,
+		mem_write => mem_we,
+		OP_JMP => op_jmp,
+		sel_out => sel_data,
+		mux_A => sel_A,
 		flags_we => flags_we,
-		destiny_JMP => jmp 		-- sinal para somar ao PC + 1 (IMM)
+		destiny_JMP => jmp
 	);
 
 	-- file register
 	Inst_file_regiser : Reg port map (
 		-- Input
-		RC => sel_reg_C,
+		RC => pipe3_sel_reg_C,
 		RA => sel_reg_A,
 		RB => sel_reg_B,
-		WE => reg_we,
+		WE => pipe3_reg_we,
 		clk => clk,
-		data => reg_C,
+		data => reg_data,
 		-- Ouput
 		A_out => reg_A,
 		B_out => reg_B
@@ -250,31 +278,52 @@ begin
 	-- mux de selecao da entrada A da ALU
 	alu_A <= reg_A when sel_A = '1' else const;
 
+	-- segundo andar de pipeline
+	process(clk)
+	begin
+		if clk'event and clk = '1' then
+			pipe2_pc_inc <= pipe1_pc_inc;
+			pipe2_jmp_cond <= cond_jmp;
+			pipe2_jmp_op <= op_jmp;
+			pipe2_jmp_dest <= jmp;
+			pipe2_alu_op <= alu_OP;
+			pipe2_mem_we <= mem_we;
+			pipe2_sel_reg_C <= sel_reg_C;
+			pipe2_reg_we <= reg_we;
+			pipe2_sel_data <= sel_data;
+			pipe2_A <= alu_A;
+			pipe2_B <= reg_B;
+			pipe2_flags_we <= flags_we;
+			pipe2_sel_reg_A <= sel_reg_A;
+			pipe2_sel_reg_B <= sel_reg_B;
+		end if;
+	end process;
+
 	-- ALU
 	Inst_ALU : ALU port map (
-        -- entradas e saídas a maiúsculas
-        OP => alu_OP,
-        A => alu_A,
-        B => reg_B,
-        C_OUTPUT => alu_S,
-        FLAGS => alu_flags
-    );            
+      -- entradas e saídas a maiúsculas
+      OP => pipe2_alu_op,
+      A => pipe2_A,
+      B => pipe2_B,
+      C_OUTPUT => alu_S,
+      FLAGS => alu_flags
+  );
 
 	-- registo das flags
 	process(clk)
 	begin
 		if clk'event and clk = '1' then
 			-- flags: Z N C V alu_flags: N V C Z
-			if flags_we(0) = '1' then
+			if pipe2_flags_we(0) = '1' then
 				flags(0) <= alu_flags(2);
 			end if;
-			if flags_we(1) = '1' then
+			if pipe2_flags_we(1) = '1' then
 				flags(1) <= alu_flags(1);
 			end if;
-			if flags_we(2) = '1' then
+			if pipe2_flags_we(2) = '1' then
 				flags(2) <= alu_flags(3);
 			end if;
-			if flags_we(3) = '1' then
+			if pipe2_flags_we(3) = '1' then
 				flags(3) <= alu_flags(0);
 			end if;
 		end if;
@@ -282,35 +331,59 @@ begin
 
 	-- bloco de verificacao de condicao de salto
 	Inst_CheckCond : CheckCond port map (
-		-- Inputs 
-    	clk => clk,
-		cond => cond_jmp,
+		-- Inputs
+  	clk => clk,
+		cond => pipe2_jmp_cond,
 		flag_zero => flags(3),
 		flag_negative => flags(2),
 		flag_carry => flags(1),
 		flag_overflow => flags(0),
-		opcode => op_jmp,
+		opcode => pipe2_jmp_op,
 		-- Outputs
 		sel_PC => sel_PC
 	);
+
+	-- somador do PC + 1 + jp
+	pc_jmp <= pipe2_pc_inc + pipe2_jmp_dest;
+
+	-- mux de selecao do proximo PC
+	with sel_PC select
+	pc_next <=	pipe2_pc_inc when "00",
+							pc_jmp when "01",
+							pipe2_B when "11",
+							X"0000" when others;
 
 	-- memoria de dados
 	Inst_data_ram : Data_RAM port map (
     	-- inputs
 		clk => clk,
-		address => reg_A,
-		data_in => reg_B,
-		we => mem_we,
+		address => pipe2_A,
+		data_in => pipe2_B,
+		we => pipe2_mem_we,
 		-- outputs
 		data_out => mem_data_out
-    );
+  );
+
+	-- terceiro andar de pipeline
+	process(clk)
+	begin
+		if clk'event and clk = '1' then
+			pipe3_alu_s <= alu_S;
+			pipe3_pc_inc <= pipe2_pc_inc;
+			pipe3_sel_data <= pipe2_sel_data;
+			pipe3_mem_data_out <= mem_data_out;
+			pipe3_reg_we <= pipe2_reg_we;
+			pipe3_sel_reg_C <= pipe2_sel_reg_C;
+			pipe3_sel_reg_A <= pipe2_sel_reg_A;
+			pipe3_sel_reg_B <= pipe2_sel_reg_B;
+		end if;
+	end process;
 
 	-- mux de selecao de entrada do register file
 	with sel_data select
-	reg_C <=	alu_S 			when "00",
-				mem_data_out 	when "01",
-				pc_inc 			when "10",
-				X"0000" 		when others;
+	reg_data <=	pipe3_alu_s when "00",
+							pipe3_mem_data_out when "01",
+							pipe3_pc_inc when "10",
+							X"0000" when others;
 
 end Behavioral;
-
