@@ -183,14 +183,14 @@ architecture Behavioral of uRisc is
 
 	-- sinais de registos pipeline
 	-- primeiro andar de pipeline
-	signal pipe1_instruction : std_logic(15 downto 0) := (others => '0');					-- instrução
-	signal pipe1_pc_inc : std_logic(15 downto 0) := (others => '0');							-- PC + 1
+	signal pipe1_instruction : std_logic_vector(15 downto 0) := (others => '0');					-- instrução
+	signal pipe1_pc_inc : std_logic_vector(15 downto 0) := (others => '0');							-- PC + 1
 	-- segundo andar de pipeline
-	signal pipe2_pc_inc : std_logic(15 downto 0) := (others => '0');							-- PC + 1
-	signal pipe2_jmp_cond : std_logic(3 downto 0) := (others => '0');							-- condição de salto
-	signal pipe2_jmp_op : std_logic(1 downto 0) := (others => '0');								-- operação de salto
-	signal pipe2_jmp_dest : std_logic(15 downto 0) := (others => '0');						-- destino de salto
-	signal pipe2_alu_op : std_logic(4 downto 0) := (others => '0');								-- operação da ALU
+	signal pipe2_pc_inc : std_logic_vector(15 downto 0) := (others => '0');							-- PC + 1
+	signal pipe2_jmp_cond : std_logic_vector(3 downto 0) := (others => '0');							-- condição de salto
+	signal pipe2_jmp_op : std_logic_vector(1 downto 0) := (others => '0');								-- operação de salto
+	signal pipe2_jmp_dest : std_logic_vector(15 downto 0) := (others => '0');						-- destino de salto
+	signal pipe2_alu_op : std_logic_vector(4 downto 0) := (others => '0');								-- operação da ALU
 	signal pipe2_mem_we : std_logic := '0';																				-- write enable da memória de dados
 	signal pipe2_sel_reg_C : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo de escrita (WC)
 	signal pipe2_reg_we : std_logic := '0';																				-- write enable do register file
@@ -198,8 +198,8 @@ architecture Behavioral of uRisc is
 	signal pipe2_A : std_logic_vector(15 downto 0) := (others => '0');						-- operando A da ALU
 	signal pipe2_B : std_logic_vector(15 downto 0) := (others => '0');						-- operando B da ALU
 	signal pipe2_flags_we : std_logic_vector(3 downto 0) := (others => '0');			-- write enables das flags (Z N C V)
-	signal pipe2_sel_reg_A : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo A
-	signal pipe2_sel_reg_B : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo B
+	--signal pipe2_sel_reg_A : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo A
+	--signal pipe2_sel_reg_B : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo B
 	-- terceiro andar de pipeline
 	signal pipe3_alu_s : std_logic_vector(15 downto 0) := (others => '0');				-- resultado da operação da ALU
 	signal pipe3_pc_inc : std_logic_vector(15 downto 0) := (others => '0');				-- PC + 1
@@ -207,8 +207,8 @@ architecture Behavioral of uRisc is
 	signal pipe3_mem_data_out : std_logic_vector(15 downto 0) := (others => '0');	-- dados de saida da memória
 	signal pipe3_reg_we : std_logic := '0';																				-- write enable do register file
 	signal pipe3_sel_reg_C : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo de escrita (WC)
-	signal pipe3_sel_reg_A : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo A
-	signal pipe3_sel_reg_B : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo B
+	--signal pipe3_sel_reg_A : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo A
+	--signal pipe3_sel_reg_B : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo B
 
 begin
 
@@ -294,8 +294,8 @@ begin
 			pipe2_A <= alu_A;
 			pipe2_B <= reg_B;
 			pipe2_flags_we <= flags_we;
-			pipe2_sel_reg_A <= sel_reg_A;
-			pipe2_sel_reg_B <= sel_reg_B;
+			--pipe2_sel_reg_A <= sel_reg_A;
+			--pipe2_sel_reg_B <= sel_reg_B;
 		end if;
 	end process;
 
@@ -374,13 +374,13 @@ begin
 			pipe3_mem_data_out <= mem_data_out;
 			pipe3_reg_we <= pipe2_reg_we;
 			pipe3_sel_reg_C <= pipe2_sel_reg_C;
-			pipe3_sel_reg_A <= pipe2_sel_reg_A;
-			pipe3_sel_reg_B <= pipe2_sel_reg_B;
+			--pipe3_sel_reg_A <= pipe2_sel_reg_A;
+			--pipe3_sel_reg_B <= pipe2_sel_reg_B;
 		end if;
 	end process;
 
 	-- mux de selecao de entrada do register file
-	with sel_data select
+	with pipe3_sel_data select
 	reg_data <=	pipe3_alu_s when "00",
 							pipe3_mem_data_out when "01",
 							pipe3_pc_inc when "10",
