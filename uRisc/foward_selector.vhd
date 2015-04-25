@@ -15,8 +15,8 @@ entity forward_selector is
 		alu_op : in std_logic_vector(4 downto 0);				-- operao a ser executada na ALU
 
 		-- Ouput
-		sel_regA_src : out std_logic_vector(3 downto 0);	-- selector da origem do registo A
-		sel_regB_src : out std_logic_vector(3 downto 0);	-- selector da origem do registo B
+		sel_regA_src : out std_logic_vector(1 downto 0);	-- selector da origem do registo A
+		sel_regB_src : out std_logic_vector(1 downto 0);	-- selector da origem do registo B
 		stall : out std_logic										-- indica que  necessrio fazer Stall
 	);
 end forward_selector;

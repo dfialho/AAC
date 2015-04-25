@@ -154,8 +154,8 @@ architecture Behavioral of uRisc is
 			alu_op : in std_logic_vector(4 downto 0);				-- operação a ser executada na ALU
 
 			-- Ouput
-			sel_regA_src : out std_logic_vector(3 downto 0);	-- selector da origem do registo A
-			sel_regB_src : out std_logic_vector(3 downto 0);	-- selector da origem do registo B
+			sel_regA_src : out std_logic_vector(1 downto 0);	-- selector da origem do registo A
+			sel_regB_src : out std_logic_vector(1 downto 0);	-- selector da origem do registo B
 			stall : out std_logic										-- indica que é necessário fazer Stall
 		);
 	end component;
@@ -205,12 +205,12 @@ architecture Behavioral of uRisc is
 	signal const : std_logic_vector(15 downto 0) := (others => '0');	-- valor da constante para a ALU
 
 	-- sinais usados para o forwarding
-	signal sel_regA_src : std_logic := '0';
-	signal sel_regB_src : std_logic := '0';
+	signal sel_regA_src : std_logic_vector(1 downto 0) := (others => '0');
+	signal sel_regB_src : std_logic_vector(1 downto 0) := (others => '0');
 	signal stall_forward : std_logic := '0';
 	-- sinais usados nos muxes de forwarding
 	signal mux_A_out : std_logic_vector(15 downto 0) := (others => '0');
-	signal alu_B : std_logic_vector(15 downto 0) := (others => '0');	-- entrada A da ALU
+	signal alu_B : std_logic_vector(15 downto 0) := (others => '0');	-- entrada B da ALU
 
 	-- sinais de registos pipeline
 	-- primeiro andar de pipeline
@@ -350,8 +350,8 @@ begin
 		alu_op => pipe2_alu_op,
 
 		-- Ouput
-		sel_regA_src => sel_regA_src;
-		sel_regB_src => sel_regB_src;
+		sel_regA_src => sel_regA_src,
+		sel_regB_src => sel_regB_src,
 		stall => stall_forward
 	);
 
