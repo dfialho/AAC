@@ -139,6 +139,27 @@ architecture Behavioral of uRisc is
 	    );
 	end component;
 
+	-- bloco trata o forwarding dos registos de entrada
+	component forward_selector
+		port(
+			-- Input
+			sel_regA : in std_logic_vector(3 downto 0);			-- selector do registo A
+	      sel_regB : in std_logic_vector(3 downto 0);   		-- selector do registo B
+	      regA_en : in std_logic;                       		-- indica se se pretende ler do registo A
+	      regB_en : in std_logic;                       		-- indica se se pretende ler do registo B
+	      sel_regC_ex : in std_logic_vector(15 downto 0);		-- selector do registo de escrita no andar EX/MEM
+			sel_regC_wb : in std_logic_vector(15 downto 0);		-- selector do registo de escrita no andar WB
+			regC_en_ex : in std_logic;									-- enable do registo de escrita no andar EX/MEM
+			regC_en_wb : in std_logic;									-- enable do registo de escrita no andar WB
+			alu_op : in std_logic_vector(4 downto 0);				-- operação a ser executada na ALU
+
+			-- Ouput
+			sel_regA_src : out std_logic_vector(3 downto 0);	-- selector da origem do registo A
+			sel_regB_src : out std_logic_vector(3 downto 0);	-- selector da origem do registo B
+			stall : out std_logic										-- indica que é necessário fazer Stall
+		);
+	end component;
+
 	-- registo do PC
 	signal pc : std_logic_vector(15 downto 0) := (others => '0');									-- valor do PC actual
 	signal pc_we : std_logic;																											-- write enable do registo do PC
@@ -182,6 +203,14 @@ architecture Behavioral of uRisc is
 	signal alu_flags : std_logic_vector(3 downto 0) := (others => '0');	-- sinais das flags apos uma operacao da ALU
 	signal alu_S : std_logic_vector(15 downto 0) := (others => '0');	-- resultado da operacao da ALU
 	signal const : std_logic_vector(15 downto 0) := (others => '0');	-- valor da constante para a ALU
+
+	-- sinais usados para o forwarding
+	signal sel_regA_src : std_logic := '0';
+	signal sel_regB_src : std_logic := '0';
+	signal stall_forward : std_logic := '0';
+	-- sinais usados nos muxes de forwarding
+	signal mux_A_out : std_logic_vector(15 downto 0) := (others => '0');
+	signal alu_B : std_logic_vector(15 downto 0) := (others => '0');	-- entrada A da ALU
 
 	-- sinais de registos pipeline
 	-- primeiro andar de pipeline
@@ -229,7 +258,7 @@ begin
 	end process;
 
 	-- write enable do pc
-	pc_we <= (not stop_pipeline);
+	pc_we <= (not stop_pipeline) or stall_forward;
 
 	-- incrementador do PC
 	pc_inc <= pc + '1';
@@ -291,8 +320,40 @@ begin
 		B_out => reg_B
 	);
 
-	-- mux de selecao da entrada A da ALU
-	alu_A <= reg_A when sel_A = '1' else const;
+	-- muxes de selecao da entrada A e B da ALU
+	mux_A_out <= reg_A when sel_A = '1' else const;
+
+	with sel_regA_src select
+	alu_A <= mux_A_out when "00",
+				mux_A_out when "01",
+				alu_S when "10",
+				sel_data when "11",
+				X"0000" when others;
+
+	with sel_regB_src select
+	alu_B <= reg_B when "00",
+				reg_B when "01",
+				alu_S when "10",
+				sel_data when "11",
+				X"0000" when others;
+
+	inst_forward_selector: forward_selector port map (
+		-- Input
+		sel_regA => sel_reg_A;
+      sel_regB => sel_reg_B;
+      regA_en => '0';
+      regB_en => '0';
+      sel_regC_ex => pipe2_sel_reg_C;
+		sel_regC_wb => pipe3_sel_reg_C;
+		regC_en_ex => pipe2_reg_we;
+		regC_en_wb => pipe3_reg_we;
+		alu_op => pipe2_alu_op;
+
+		-- Ouput
+		sel_regA_src => sel_regA_src;
+		sel_regB_src => sel_regB_src;
+		stall => stall_forward
+	);
 
 	-- segundo andar de pipeline
 	process(clk)
