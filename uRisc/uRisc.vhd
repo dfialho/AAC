@@ -339,15 +339,15 @@ begin
 
 	inst_forward_selector: forward_selector port map (
 		-- Input
-		sel_regA => sel_reg_A;
-      sel_regB => sel_reg_B;
-      regA_en => '0';
-      regB_en => '0';
-      sel_regC_ex => pipe2_sel_reg_C;
-		sel_regC_wb => pipe3_sel_reg_C;
-		regC_en_ex => pipe2_reg_we;
-		regC_en_wb => pipe3_reg_we;
-		alu_op => pipe2_alu_op;
+		sel_regA => sel_reg_A,
+      sel_regB => sel_reg_B,
+      regA_en => '0',
+      regB_en => '0',
+      sel_regC_ex => pipe2_sel_reg_C,
+		sel_regC_wb => pipe3_sel_reg_C,
+		regC_en_ex => pipe2_reg_we,
+		regC_en_wb => pipe3_reg_we,
+		alu_op => pipe2_alu_op,
 
 		-- Ouput
 		sel_regA_src => sel_regA_src;
