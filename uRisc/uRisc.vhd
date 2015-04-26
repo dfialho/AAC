@@ -197,7 +197,7 @@ architecture Behavioral of uRisc is
 	signal mem_data_out : std_logic_vector(15 downto 0) := (others => '0'); -- sinal de saida de dados da memoria
 
 	-- sinais da ALU
-	signal sel_A : std_logic;											-- seleciona a origem da entrada A da ALU
+	signal sel_A : std_logic;														-- seleciona saida do mux A
 	signal alu_A : std_logic_vector(15 downto 0) := (others => '0');	-- entrada A da ALU
 	signal alu_OP : std_logic_vector(4 downto 0) := (others => '0');	-- sinal de selecao da operacao da ALU
 	signal alu_flags : std_logic_vector(3 downto 0) := (others => '0');	-- sinais das flags apos uma operacao da ALU
@@ -217,6 +217,7 @@ architecture Behavioral of uRisc is
 	signal pipe1_instruction : std_logic_vector(15 downto 0) := (others => '0');					-- instrução
 	signal pipe1_pc_inc : std_logic_vector(15 downto 0) := (others => '0');							-- PC + 1
 	-- segundo andar de pipeline
+	signal pipe2_rst : std_logic := '0';															-- sinal de reset do segundo andar de pipeline
 	signal pipe2_pc_inc : std_logic_vector(15 downto 0) := (others => '0');							-- PC + 1
 	signal pipe2_jmp_cond : std_logic_vector(3 downto 0) := (others => '0');							-- condição de salto
 	signal pipe2_jmp_op : std_logic_vector(1 downto 0) := (others => '0');								-- operação de salto
@@ -341,8 +342,8 @@ begin
 		-- Input
 		sel_regA => sel_reg_A,
       sel_regB => sel_reg_B,
-      regA_en => '0',
-      regB_en => '0',
+      regA_en => sel_A,
+      regB_en => '1',
       sel_regC_ex => pipe2_sel_reg_C,
 		sel_regC_wb => pipe3_sel_reg_C,
 		regC_en_ex => pipe2_reg_we,
@@ -355,24 +356,32 @@ begin
 		stall => stall_forward
 	);
 
+	pipe2_rst <= stall_forward;
+
 	-- segundo andar de pipeline
 	process(clk)
 	begin
 		if clk'event and clk = '1' then
-			pipe2_pc_inc <= pipe1_pc_inc;
-			pipe2_jmp_cond <= cond_jmp;
-			pipe2_jmp_op <= op_jmp;
-			pipe2_jmp_dest <= jmp;
-			pipe2_alu_op <= alu_OP;
-			pipe2_mem_we <= mem_we;
-			pipe2_sel_reg_C <= sel_reg_C;
-			pipe2_reg_we <= reg_we;
-			pipe2_sel_data <= sel_data;
-			pipe2_A <= alu_A;
-			pipe2_B <= alu_B;
-			pipe2_flags_we <= flags_we;
-			--pipe2_sel_reg_A <= sel_reg_A;
-			--pipe2_sel_reg_B <= sel_reg_B;
+			if pipe2_rst = '1' then
+				pipe2_mem_we <= '0';
+				pipe2_reg_we <= '0';
+				pipe2_flags_we <= "0000";
+			else
+				pipe2_pc_inc <= pipe1_pc_inc;
+				pipe2_jmp_cond <= cond_jmp;
+				pipe2_jmp_op <= op_jmp;
+				pipe2_jmp_dest <= jmp;
+				pipe2_alu_op <= alu_OP;
+				pipe2_mem_we <= mem_we;
+				pipe2_sel_reg_C <= sel_reg_C;
+				pipe2_reg_we <= reg_we;
+				pipe2_sel_data <= sel_data;
+				pipe2_A <= alu_A;
+				pipe2_B <= alu_B;
+				pipe2_flags_we <= flags_we;
+				--pipe2_sel_reg_A <= sel_reg_A;
+				--pipe2_sel_reg_B <= sel_reg_B;
+			end if;
 		end if;
 	end process;
 
