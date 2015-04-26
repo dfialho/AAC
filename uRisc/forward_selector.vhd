@@ -66,7 +66,7 @@ begin
 	-- o bit menos significativo do sinal de selecao de saida indica se o valor do registo A vem
 	-- do andar de WB ou EX/MEM caso seja necessario fazer forward
 	-- no caso de nao ser necessario fazer forward este bit  ignorado
-	sel_regA_src(0) <= not regA_forward_wb;
+	sel_regA_src(0) <= not regA_forward_ex;
 
 	--------------------------------------------------
 	-- circuito que seleciona a origem do registo B --
@@ -88,7 +88,7 @@ begin
 	-- o bit menos significativo do sinal de selecao de saida indica se o valor do registo B vem
 	-- do andar de WB ou EX/MEM caso seja necessario fazer forward
 	-- no caso de nao ser necessario fazer forward este bit  ignorado
-	sel_regB_src(0) <= not regB_forward_wb;
+	sel_regB_src(0) <= not regB_forward_ex;
 
 	-------------------------------------------------------------------------------------------------
 	-- Circuito que indica se  preciso fazer Stall 															  --
