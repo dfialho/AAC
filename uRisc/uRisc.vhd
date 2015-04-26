@@ -273,21 +273,21 @@ begin
         do => instr
 	);
 
+	instr_to_decode <= instr when stop_pipeline = '0' else X"0000";
+
 	-- primeiro andar de pipeline
 	process(clk)
 	begin
 		if clk'event and clk = '1' then
-			pipe1_instruction <= instr;
+			pipe1_instruction <= instr_to_decode;
 			pipe1_pc_inc <= pc_inc;
 		end if;
 	end process;
 
-	instr_to_decode <= pipe1_instruction when stop_pipeline = '0' else X"0000";
-
 	-- decoder
 	Inst_decoder : ID port map (
 		--Inputs
-		Instr => instr_to_decode,
+		Instr => pipe1_instruction,
 		-- Outputs
 		WE => reg_we,
 		RA => sel_reg_A,
