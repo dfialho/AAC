@@ -327,14 +327,14 @@ begin
 	alu_A <= mux_A_out when "00",
 				mux_A_out when "01",
 				alu_S when "10",
-				sel_data when "11",
+				reg_data when "11",
 				X"0000" when others;
 
 	with sel_regB_src select
 	alu_B <= reg_B when "00",
 				reg_B when "01",
 				alu_S when "10",
-				sel_data when "11",
+				reg_data when "11",
 				X"0000" when others;
 
 	inst_forward_selector: forward_selector port map (
