@@ -4,12 +4,12 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity forward_selector is
 	port(
 		-- Input
-		sel_regA : in std_logic_vector(3 downto 0);			-- selector do registo A
-      sel_regB : in std_logic_vector(3 downto 0);   		-- selector do registo B
+		sel_regA : in std_logic_vector(2 downto 0);			-- selector do registo A
+      sel_regB : in std_logic_vector(2 downto 0);   		-- selector do registo B
       regA_en : in std_logic;                       		-- indica se se pretende ler do registo A
       regB_en : in std_logic;                       		-- indica se se pretende ler do registo B
-      sel_regC_ex : in std_logic_vector(15 downto 0);		-- selector do registo de escrita no andar EX/MEM
-		sel_regC_wb : in std_logic_vector(15 downto 0);		-- selector do registo de escrita no andar WB
+      sel_regC_ex : in std_logic_vector(2 downto 0);		-- selector do registo de escrita no andar EX/MEM
+		sel_regC_wb : in std_logic_vector(2 downto 0);		-- selector do registo de escrita no andar WB
 		regC_en_ex : in std_logic;									-- enable do registo de escrita no andar EX/MEM
 		regC_en_wb : in std_logic;									-- enable do registo de escrita no andar WB
 		alu_op : in std_logic_vector(4 downto 0);				-- operao a ser executada na ALU
