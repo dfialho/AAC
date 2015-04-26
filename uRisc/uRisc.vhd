@@ -369,7 +369,7 @@ begin
 			pipe2_reg_we <= reg_we;
 			pipe2_sel_data <= sel_data;
 			pipe2_A <= alu_A;
-			pipe2_B <= reg_B;
+			pipe2_B <= alu_B;
 			pipe2_flags_we <= flags_we;
 			--pipe2_sel_reg_A <= sel_reg_A;
 			--pipe2_sel_reg_B <= sel_reg_B;
