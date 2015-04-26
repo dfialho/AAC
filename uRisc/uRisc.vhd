@@ -305,7 +305,8 @@ begin
 	);
 
 	-- bloco que determina se é preciso parar o pipeline e deixar passar a instrução de salto condicional
-	stop_pipeline <= cond_jmp(3) nand pipe2_jmp_cond(3);
+	--stop_pipeline <= cond_jmp(3) xor pipe2_jmp_cond(3);
+	stop_pipeline <= '0';
 
 	-- file register
 	Inst_file_regiser : Reg port map (
@@ -430,14 +431,14 @@ begin
 	);
 
 	-- somador do PC + 1 + jp
-	pc_jmp <= pipe2_pc_inc + pipe2_jmp_dest;
+	pc_jmp <= pc_inc + pipe2_jmp_dest;
 
 	-- mux de selecao do proximo PC
 	with sel_PC select
-	pc_next <=	pipe2_pc_inc when "00",
-							pc_jmp when "01",
-							pipe2_B when "11",
-							X"0000" when others;
+	pc_next <=	pc_inc when "00",
+					pc_jmp when "01",
+					pipe2_B when "11",
+					X"0000" when others;
 
 	-- memoria de dados
 	Inst_data_ram : Data_RAM port map (
