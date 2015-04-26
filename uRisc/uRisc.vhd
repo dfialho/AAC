@@ -259,7 +259,7 @@ begin
 	end process;
 
 	-- write enable do pc
-	pc_we <= (not stop_pipeline) or stall_forward;
+	pc_we <= stop_pipeline nor stall_forward;
 
 	-- incrementador do PC
 	pc_inc <= pc + '1';
@@ -276,9 +276,9 @@ begin
 	instr_to_decode <= instr when stop_pipeline = '0' else X"0000";
 
 	-- primeiro andar de pipeline
-	process(clk)
+	process(clk, stall_forward)
 	begin
-		if clk'event and clk = '1' then
+		if clk'event and clk = '1' and stall_forward = '0' then
 			pipe1_instruction <= instr_to_decode;
 			pipe1_pc_inc <= pc_inc;
 		end if;
