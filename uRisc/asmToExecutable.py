@@ -62,15 +62,15 @@ def cleanOutFile(filename):
             
             k = int(line.split(" ")[1], 16)
             while k > 0:
-				RAM.append('\t' + str(i) + "\t=> X\"0000\",\n")
+				#RAM.append('\t' + str(i) + "\t=> X\"0000\",\n")
 				i += 1
 				k -= 1
             
         else:
             if isData == True:
-				RAM.append('\t' + str(i) + "\t=> X\"" + line.split("\n")[0] + "\",\n")
+				RAM.append('\t' + str(i) + " \t=> X\"" + line.split("\n")[0] + "\",\n")
             else :
-				ROM.append('\t' + str(i) + "\t=> X\"" + line.split("\n")[0] + "\",\n")
+				ROM.append('\t' + str(i) + " \t=> X\"" + line.split("\n")[0] + "\",\n")
             i += 1        
     
     f.close()    
@@ -148,5 +148,5 @@ ROM, RAM = cleanOutFile(filename + ".out")
 writeToMemory(ROMfile, ROM)
 writeToMemory(RAMfile, RAM)
 
-call(["rm " + filename + ".obj " + filename + ".lis"], shell=True)
+call(["rm " + filename + ".obj " + filename + ".lis " + filename + ".out"], shell=True)
 print "done!"
