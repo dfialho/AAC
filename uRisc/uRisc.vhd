@@ -242,11 +242,23 @@ architecture Behavioral of uRisc is
 	--signal pipe3_sel_reg_A : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo A
 	--signal pipe3_sel_reg_B : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo B
 
+	-- sinais da BTB
+	signal taken : std_logic := '0';																-- indica se assume o salto ou não
+	signal btb_jmp_addr : std_logic_vector(15 downto 0) := (others => '0');			-- endereco de salto
+
 	-- sinais de resolução de conflitos de controlo
 	signal stop_pipeline : std_logic := '0';																			-- indica se é necessário parar o pipeline
 	signal instr_to_decode : std_logic_vector(15 downto 0) := (others => '0');		-- instrução para ser descodificada
 
+	signal pc_mux_out : std_logic_vector(15 downto 0) := (others => '0');			-- saida do mux que seleciona se próximo PC vem da BTB ou do bloco NextPC
+
 begin
+
+	-- mux de entrada do PC; permite seleionar se o próximo PC vem da BTB ou do bloco NextPC
+	pc_mux_out <= btb_jmp_addr when taken = '1' else pc_next;
+
+	-- write enable do pc
+	pc_we <= stall_forward;
 
 	-- registo do PC; este registo nao precisa de enable porque esta sempre a ser actualizado
 	process(clk)
@@ -257,9 +269,6 @@ begin
 			end if;
 		end if;
 	end process;
-
-	-- write enable do pc
-	pc_we <= stop_pipeline nor stall_forward;
 
 	-- incrementador do PC
 	pc_inc <= pc + '1';
