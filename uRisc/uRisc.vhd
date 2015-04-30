@@ -241,14 +241,14 @@ architecture Behavioral of uRisc is
 	signal pipe1_pc_inc : std_logic_vector(15 downto 0) := (others => '0');				-- PC + 1
 	signal pipe1_pc : std_logic_vector(15 downto 0) := (others => '0');
 	signal pipe1_taken : std_logic := '0';
-	signal pipe1_btb_jmp_addr : std_logic_vector(15 downto 0) := (others => '0');
+	--signal pipe1_btb_jmp_addr : std_logic_vector(15 downto 0) := (others => '0');
 
 	-- segundo andar de pipeline
 	signal pipe2_rst : std_logic := '0';															-- sinal de reset do segundo andar de pipeline
 	signal pipe2_pc_inc : std_logic_vector(15 downto 0) := (others => '0');							-- PC + 1
-	signal pipe2_jmp_cond : std_logic_vector(3 downto 0) := (others => '0');							-- condição de salto
-	signal pipe2_jmp_op : std_logic_vector(1 downto 0) := (others => '0');								-- operação de salto
-	signal pipe2_jmp_dest : std_logic_vector(15 downto 0) := (others => '0');						-- destino de salto
+	--signal pipe2_jmp_cond : std_logic_vector(3 downto 0) := (others => '0');							-- condição de salto
+	--signal pipe2_jmp_op : std_logic_vector(1 downto 0) := (others => '0');								-- operação de salto
+	--signal pipe2_jmp_dest : std_logic_vector(15 downto 0) := (others => '0');						-- destino de salto
 	signal pipe2_alu_op : std_logic_vector(4 downto 0) := (others => '0');								-- operação da ALU
 	signal pipe2_mem_we : std_logic := '0';																				-- write enable da memória de dados
 	signal pipe2_sel_reg_C : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo de escrita (WC)
@@ -292,7 +292,7 @@ begin
 	begin
 		if clk'event and clk = '1' then
 			if pc_we = '1' then
-				pc <= pc_next;
+				pc <= pc_mux_out;
 			end if;
 		end if;
 	end process;
@@ -332,13 +332,13 @@ begin
 				pipe1_pc_inc <= X"0000";
 				pipe1_pc <= X"0000";
 				pipe1_taken <= '0';
-				pipe1_btb_jmp_addr <= X"0000";
+				--pipe1_btb_jmp_addr <= X"0000";
 			else
 				pipe1_instruction <= instr;
 				pipe1_pc_inc <= pc_inc;
 				pipe1_pc <= pc;
 				pipe1_taken <= taken;
-				pipe1_btb_jmp_addr <= btb_jmp_addr;
+				--pipe1_btb_jmp_addr <= btb_jmp_addr;
 			end if;
 		end if;
 	end process;
@@ -433,9 +433,9 @@ begin
 				pipe2_flags_we <= "0000";
 			else
 				pipe2_pc_inc <= pipe1_pc_inc;
-				pipe2_jmp_cond <= cond_jmp;
-				pipe2_jmp_op <= op_jmp;
-				pipe2_jmp_dest <= jmp;
+				--pipe2_jmp_cond <= cond_jmp;
+				--pipe2_jmp_op <= op_jmp;
+				--pipe2_jmp_dest <= jmp;
 				pipe2_alu_op <= alu_OP;
 				pipe2_mem_we <= mem_we;
 				pipe2_sel_reg_C <= sel_reg_C;
@@ -488,22 +488,22 @@ begin
 	Inst_CheckCond : CheckCond port map (
 		-- Inputs
   	clk => clk,
-		cond => jmp_cond,
+		cond => cond_jmp,
 		flag_zero => flag_Z,
 		flag_negative => flag_N,
 		flag_carry => flag_C,
 		flag_overflow => flag_V,
-		opcode => jmp_op,
+		opcode => op_jmp,
 		-- Outputs
 		sel_PC => sel_PC
 	);
 
 	-- somador do PC + 1 + jp
-	pc_jmp <= pc_inc + jmp_dest;
+	pc_jmp <= pc_inc + jmp;
 
 	-- mux de selecao do proximo PC
 	with sel_PC select
-	pc_next <=	pc_inc when "00",
+	pc_next <=	pipe1_pc_inc when "00",
 					pc_jmp when "01",
 					reg_B when "11",
 					X"0000" when others;
