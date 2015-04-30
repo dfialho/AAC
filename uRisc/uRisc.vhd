@@ -189,6 +189,7 @@ architecture Behavioral of uRisc is
 	-- registo das flags
 	signal flags : std_logic_vector(3 downto 0) := (others => '0'); 	-- ordem das flags: Z N C V
 	signal flags_we : std_logic_vector(3 downto 0) := (others => '0'); 	-- wirte enables dos registos da flags
+	signal flag_Z, flag_V, flag_N, flag_C : std_logic := '0';
 
 	-- sinais de ligacao do bloco de verificacao de condicao de salto
 	signal cond_jmp : std_logic_vector(3 downto 0) := (others => '0');	-- sinal que indica a condicao de salto
@@ -330,7 +331,7 @@ begin
 				pipe1_instruction <= X"0000";
 				pipe1_pc_inc <= X"0000";
 				pipe1_pc <= X"0000";
-				pipe1_taken <= '0'';
+				pipe1_taken <= '0';
 				pipe1_btb_jmp_addr <= X"0000";
 			else
 				pipe1_instruction <= instr;
@@ -477,28 +478,34 @@ begin
 		end if;
 	end process;
 
+	-- forwarding das flags -- flags: Z N C V alu_flags: N V C Z
+	flag_Z <= alu_flags(0) when pipe2_flags_we(3) = '1' else flags(3);
+	flag_N <= alu_flags(3) when pipe2_flags_we(2) = '1' else flags(2);
+	flag_C <= alu_flags(1) when pipe2_flags_we(1) = '1' else flags(1);
+	flag_V <= alu_flags(2) when pipe2_flags_we(0) = '1' else flags(0);
+
 	-- bloco de verificacao de condicao de salto
 	Inst_CheckCond : CheckCond port map (
 		-- Inputs
   	clk => clk,
-		cond => pipe2_jmp_cond,
-		flag_zero => flags(3),
-		flag_negative => flags(2),
-		flag_carry => flags(1),
-		flag_overflow => flags(0),
-		opcode => pipe2_jmp_op,
+		cond => jmp_cond,
+		flag_zero => flag_Z,
+		flag_negative => flag_N,
+		flag_carry => flag_C,
+		flag_overflow => flag_V,
+		opcode => jmp_op,
 		-- Outputs
 		sel_PC => sel_PC
 	);
 
 	-- somador do PC + 1 + jp
-	pc_jmp <= pc_inc + pipe2_jmp_dest;
+	pc_jmp <= pc_inc + jmp_dest;
 
 	-- mux de selecao do proximo PC
 	with sel_PC select
 	pc_next <=	pc_inc when "00",
 					pc_jmp when "01",
-					pipe2_B when "11",
+					reg_B when "11",
 					X"0000" when others;
 
 	-- memoria de dados
