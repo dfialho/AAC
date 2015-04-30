@@ -214,8 +214,12 @@ architecture Behavioral of uRisc is
 
 	-- sinais de registos pipeline
 	-- primeiro andar de pipeline
-	signal pipe1_instruction : std_logic_vector(15 downto 0) := (others => '0');					-- instrução
-	signal pipe1_pc_inc : std_logic_vector(15 downto 0) := (others => '0');							-- PC + 1
+	signal pipe1_instruction : std_logic_vector(15 downto 0) := (others => '0');		-- instrução
+	signal pipe1_pc_inc : std_logic_vector(15 downto 0) := (others => '0');				-- PC + 1
+	signal pipe1_pc : std_logic_vector(15 downto 0) := (others => '0');
+	signal pipe1_taken : std_logic := '0';
+	signal pipe1_btb_jmp_addr : std_logic_vector(15 downto 0) := (others => '0');
+
 	-- segundo andar de pipeline
 	signal pipe2_rst : std_logic := '0';															-- sinal de reset do segundo andar de pipeline
 	signal pipe2_pc_inc : std_logic_vector(15 downto 0) := (others => '0');							-- PC + 1
@@ -282,14 +286,15 @@ begin
         do => instr
 	);
 
-	instr_to_decode <= instr when stop_pipeline = '0' else X"0000";
-
 	-- primeiro andar de pipeline
 	process(clk, stall_forward)
 	begin
 		if clk'event and clk = '1' and stall_forward = '0' then
-			pipe1_instruction <= instr_to_decode;
+			pipe1_instruction <= instr;
 			pipe1_pc_inc <= pc_inc;
+			pipe1_pc <= pc;
+			pipe1_taken <= taken;
+			pipe1_btb_jmp_addr <= btb_jmp_addr;
 		end if;
 	end process;
 
