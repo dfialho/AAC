@@ -33,8 +33,8 @@ use IEEE.STD_LOGIC_SIGNED.ALL;
 
 entity uRisc is
 	port(
-		-- Inputs
-		clk : in std_logic
+		clk : in std_logic;
+		output : out std_logic
 	);
 end uRisc;
 
@@ -281,6 +281,9 @@ architecture Behavioral of uRisc is
 	signal mux_smash_pc : std_logic_vector(15 downto 0) := (others => '0');			-- valor do pc tendo em conta se a operacao no fetch é para ser esmagada
 
 begin
+
+	-- sinal que nao serve para nada apenas para o xilinx ficar contente e não nos chamar de estupidos
+	output <= stall_forward;
 
 	-- write enable do pc
 	pc_we <= not stall_forward;
