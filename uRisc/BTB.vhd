@@ -44,7 +44,7 @@ type MEM_TYPE is array (0 to (2**ADDR_WIDTH)-1) of STD_LOGIC_VECTOR(DATA_WIDTH -
 begin
 
 ---------------------- Writing ----------------------
-	newPredBits(1) <= oldPredBits(0) 		and ((oldPredBits(1) or taken) or (oldPredBits(1) and taken));
+	newPredBits(1) <= (oldPredBits(0) 		and (oldPredBits(1) or taken)) or (oldPredBits(1) and taken);
 	newPredBits(0) <= (not oldPredBits(0)) 	and ((oldPredBits(1) or taken) or (oldPredBits(1) and taken));
 	
 	with didLastHit and lastReadValid select

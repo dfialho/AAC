@@ -40,6 +40,28 @@ end uRisc;
 
 architecture Behavioral of uRisc is
 
+	-- BTB
+	component BTB is
+		generic(
+				ADDR_WIDTH : integer := 8;
+				DATA_WIDTH : integer := 1+8+16+2 -- sum of all the contents of the memory: Valid bit, Tag, Target, Pred bits
+			);
+		port (
+	  		clk           	: in std_logic;
+
+			-- Read ops
+			readAddr     	: in std_logic_vector(15 downto 0);
+			pcOut         	: out std_logic_vector(15 downto 0);
+			predictionOut 	: out std_logic; -- 1: take it, 0: don't take it
+
+			-- Write ops
+			writeAddr	  	: in std_logic_vector(15 downto 0);
+			targetAddr		: in std_logic_vector(15 downto 0);
+			taken		  		: in std_logic;
+			we            	: in std_logic
+		);
+	end component;
+
 	-- memoria de instrucoes (ROM)
 	component DualPortMemory is
 		Generic(
@@ -167,6 +189,7 @@ architecture Behavioral of uRisc is
 	-- registo das flags
 	signal flags : std_logic_vector(3 downto 0) := (others => '0'); 	-- ordem das flags: Z N C V
 	signal flags_we : std_logic_vector(3 downto 0) := (others => '0'); 	-- wirte enables dos registos da flags
+	signal flag_Z, flag_V, flag_N, flag_C : std_logic := '0';
 
 	-- sinais de ligacao do bloco de verificacao de condicao de salto
 	signal cond_jmp : std_logic_vector(3 downto 0) := (others => '0');	-- sinal que indica a condicao de salto
@@ -214,14 +237,18 @@ architecture Behavioral of uRisc is
 
 	-- sinais de registos pipeline
 	-- primeiro andar de pipeline
-	signal pipe1_instruction : std_logic_vector(15 downto 0) := (others => '0');					-- instrução
-	signal pipe1_pc_inc : std_logic_vector(15 downto 0) := (others => '0');							-- PC + 1
+	signal pipe1_instruction : std_logic_vector(15 downto 0) := (others => '0');		-- instrução
+	signal pipe1_pc_inc : std_logic_vector(15 downto 0) := (others => '0');				-- PC + 1
+	signal pipe1_pc : std_logic_vector(15 downto 0) := (others => '0');
+	signal pipe1_taken : std_logic := '0';
+	--signal pipe1_btb_jmp_addr : std_logic_vector(15 downto 0) := (others => '0');
+
 	-- segundo andar de pipeline
 	signal pipe2_rst : std_logic := '0';															-- sinal de reset do segundo andar de pipeline
 	signal pipe2_pc_inc : std_logic_vector(15 downto 0) := (others => '0');							-- PC + 1
-	signal pipe2_jmp_cond : std_logic_vector(3 downto 0) := (others => '0');							-- condição de salto
-	signal pipe2_jmp_op : std_logic_vector(1 downto 0) := (others => '0');								-- operação de salto
-	signal pipe2_jmp_dest : std_logic_vector(15 downto 0) := (others => '0');						-- destino de salto
+	--signal pipe2_jmp_cond : std_logic_vector(3 downto 0) := (others => '0');							-- condição de salto
+	--signal pipe2_jmp_op : std_logic_vector(1 downto 0) := (others => '0');								-- operação de salto
+	--signal pipe2_jmp_dest : std_logic_vector(15 downto 0) := (others => '0');						-- destino de salto
 	signal pipe2_alu_op : std_logic_vector(4 downto 0) := (others => '0');								-- operação da ALU
 	signal pipe2_mem_we : std_logic := '0';																				-- write enable da memória de dados
 	signal pipe2_sel_reg_C : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo de escrita (WC)
@@ -230,8 +257,7 @@ architecture Behavioral of uRisc is
 	signal pipe2_A : std_logic_vector(15 downto 0) := (others => '0');						-- operando A da ALU
 	signal pipe2_B : std_logic_vector(15 downto 0) := (others => '0');						-- operando B da ALU
 	signal pipe2_flags_we : std_logic_vector(3 downto 0) := (others => '0');			-- write enables das flags (Z N C V)
-	--signal pipe2_sel_reg_A : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo A
-	--signal pipe2_sel_reg_B : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo B
+
 	-- terceiro andar de pipeline
 	signal pipe3_alu_s : std_logic_vector(15 downto 0) := (others => '0');				-- resultado da operação da ALU
 	signal pipe3_pc_inc : std_logic_vector(15 downto 0) := (others => '0');				-- PC + 1
@@ -239,14 +265,25 @@ architecture Behavioral of uRisc is
 	signal pipe3_mem_data_out : std_logic_vector(15 downto 0) := (others => '0');	-- dados de saida da memória
 	signal pipe3_reg_we : std_logic := '0';																				-- write enable do register file
 	signal pipe3_sel_reg_C : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo de escrita (WC)
-	--signal pipe3_sel_reg_A : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo A
-	--signal pipe3_sel_reg_B : std_logic_vector(2 downto 0) := (others => '0');			-- selector do registo B
+
+	-- sinais da BTB
+	signal taken : std_logic := '0';																-- indica se assume o salto ou não
+	signal btb_jmp_addr : std_logic_vector(15 downto 0) := (others => '0');			-- endereco de salto
 
 	-- sinais de resolução de conflitos de controlo
-	signal stop_pipeline : std_logic := '0';																			-- indica se é necessário parar o pipeline
-	signal instr_to_decode : std_logic_vector(15 downto 0) := (others => '0');		-- instrução para ser descodificada
+	signal to_jmp : std_logic := '0';															-- sinal que indica que foi feito um salto
+	signal btb_we : std_logic := '0';															-- write enable da BTB
+	signal smash : std_logic := '0';																-- indicar que se pretende esmagar instruções anteriores
+
+	-- sinais do bloco de next pc
+	signal mux_op_pc : std_logic_vector(15 downto 0) := (others => '0');				-- valor do pc tendo em conta a operacao e condicao de salto
+	signal mux_taken_pc : std_logic_vector(15 downto 0) := (others => '0');			-- valor do pc dependente se o salto foi tomado ou nao
+	signal mux_smash_pc : std_logic_vector(15 downto 0) := (others => '0');			-- valor do pc tendo em conta se a operacao no fetch é para ser esmagada
 
 begin
+
+	-- write enable do pc
+	pc_we <= not stall_forward;
 
 	-- registo do PC; este registo nao precisa de enable porque esta sempre a ser actualizado
 	process(clk)
@@ -258,11 +295,22 @@ begin
 		end if;
 	end process;
 
-	-- write enable do pc
-	pc_we <= stop_pipeline nor stall_forward;
-
 	-- incrementador do PC
 	pc_inc <= pc + '1';
+
+	-- BTB
+	Inst_BTB : BTB port map (
+  		clk => clk,
+		-- Read ops
+		readAddr => pc,						-- PC directamente do registo
+		pcOut => btb_jmp_addr,				-- endereco armazenado na BTB
+		predictionOut => taken,				-- sinal de indicacao de salto
+		-- Write ops
+		writeAddr => pipe1_pc,				-- PC no andar de ID
+		targetAddr => pc_jmp,				-- endereco de salto calculado no bloco NextPC
+		taken => to_jmp,						-- indicacao de que o salto foi ou não tomado
+		we => btb_we							-- write enable da btb
+	);
 
 	-- memoria de instrucoes
 	Inst_rom : DualPortMemory port map (
@@ -273,14 +321,23 @@ begin
         do => instr
 	);
 
-	instr_to_decode <= instr when stop_pipeline = '0' else X"0000";
-
 	-- primeiro andar de pipeline
 	process(clk, stall_forward)
 	begin
 		if clk'event and clk = '1' and stall_forward = '0' then
-			pipe1_instruction <= instr_to_decode;
-			pipe1_pc_inc <= pc_inc;
+			if smash = '1' then
+				pipe1_instruction <= X"0000";
+				pipe1_pc_inc <= X"0000";
+				pipe1_pc <= X"0000";
+				pipe1_taken <= '0';
+				--pipe1_btb_jmp_addr <= X"0000";
+			else
+				pipe1_instruction <= instr;
+				pipe1_pc_inc <= pc_inc;
+				pipe1_pc <= pc;
+				pipe1_taken <= taken;
+				--pipe1_btb_jmp_addr <= btb_jmp_addr;
+			end if;
 		end if;
 	end process;
 
@@ -303,10 +360,6 @@ begin
 		flags_we => flags_we,
 		destiny_JMP => jmp
 	);
-
-	-- bloco que determina se é preciso parar o pipeline e deixar passar a instrução de salto condicional
-	--stop_pipeline <= cond_jmp(3) xor pipe2_jmp_cond(3);
-	stop_pipeline <= '0';
 
 	-- file register
 	Inst_file_regiser : Reg port map (
@@ -359,6 +412,15 @@ begin
 
 	pipe2_rst <= stall_forward;
 
+	-- determinar se foi feito um salto
+	to_jmp <= sel_PC(0) or sel_PC(1);
+
+	-- escreve-se na btb caso se trate de uma instrucao de salto condicional
+	btb_we <= not cond_jmp(3);
+
+	-- é necessario esmagar	a intrucao no fetch caso se pretenda saltar e não se tenha tomado o salto no fetch ou ao contrario
+	smash <= pipe1_taken xor to_jmp;
+
 	-- segundo andar de pipeline
 	process(clk)
 	begin
@@ -369,9 +431,9 @@ begin
 				pipe2_flags_we <= "0000";
 			else
 				pipe2_pc_inc <= pipe1_pc_inc;
-				pipe2_jmp_cond <= cond_jmp;
-				pipe2_jmp_op <= op_jmp;
-				pipe2_jmp_dest <= jmp;
+				--pipe2_jmp_cond <= cond_jmp;
+				--pipe2_jmp_op <= op_jmp;
+				--pipe2_jmp_dest <= jmp;
 				pipe2_alu_op <= alu_OP;
 				pipe2_mem_we <= mem_we;
 				pipe2_sel_reg_C <= sel_reg_C;
@@ -380,8 +442,6 @@ begin
 				pipe2_A <= alu_A;
 				pipe2_B <= alu_B;
 				pipe2_flags_we <= flags_we;
-				--pipe2_sel_reg_A <= sel_reg_A;
-				--pipe2_sel_reg_B <= sel_reg_B;
 			end if;
 		end if;
 	end process;
@@ -416,29 +476,50 @@ begin
 		end if;
 	end process;
 
+	-- forwarding das flags -- flags: Z N C V alu_flags: N V C Z
+	flag_Z <= alu_flags(0) when pipe2_flags_we(3) = '1' else flags(3);
+	flag_N <= alu_flags(3) when pipe2_flags_we(2) = '1' else flags(2);
+	flag_C <= alu_flags(1) when pipe2_flags_we(1) = '1' else flags(1);
+	flag_V <= alu_flags(2) when pipe2_flags_we(0) = '1' else flags(0);
+
 	-- bloco de verificacao de condicao de salto
 	Inst_CheckCond : CheckCond port map (
 		-- Inputs
   	clk => clk,
-		cond => pipe2_jmp_cond,
-		flag_zero => flags(3),
-		flag_negative => flags(2),
-		flag_carry => flags(1),
-		flag_overflow => flags(0),
-		opcode => pipe2_jmp_op,
+		cond => cond_jmp,
+		flag_zero => flag_Z,
+		flag_negative => flag_N,
+		flag_carry => flag_C,
+		flag_overflow => flag_V,
+		opcode => op_jmp,
 		-- Outputs
 		sel_PC => sel_PC
 	);
 
-	-- somador do PC + 1 + jp
-	pc_jmp <= pc_inc + pipe2_jmp_dest;
+	------------------------------------
+	-- determinar proximo valor do PC --
+	------------------------------------
+
+	-- somador do PC+1 do andar de ID + jmp
+	pc_jmp <= pipe1_pc_inc + jmp;
 
 	-- mux de selecao do proximo PC
 	with sel_PC select
-	pc_next <=	pc_inc when "00",
+	mux_op_pc <=	pc_inc when "00",	-- PC+1 do fetch
 					pc_jmp when "01",
-					pipe2_B when "11",
+					reg_B when "10",	-- testar se isto esta correcto
+					reg_B when "11",
 					X"0000" when others;
+
+	-- mux que seleciona o proximo PC tendo em conta se o salto foi tomado ou nao
+	mux_taken_pc <= pipe1_pc_inc when pipe1_taken = '1' else mux_op_pc;
+
+	-- mux que seleciona o proximo PC tendo em conta se a operacao no fetch é para ser esmagada
+	mux_smash_pc <= mux_taken_pc when smash = '1' else pc_inc;
+
+	-- mux que seleciona se o pc é carregado com o endereço determinado no andar de ID ou com o endereço aramzenado na BTB
+	-- o pc só é caregado com o endereço da BTB caso o salto seja para ser tomado e não se pretenda esmagar a operação no andar de fetch
+	pc_next <= btb_jmp_addr when (taken and (not smash)) = '1' else mux_smash_pc;
 
 	-- memoria de dados
 	Inst_data_ram : Data_RAM port map (
@@ -461,16 +542,14 @@ begin
 			pipe3_mem_data_out <= mem_data_out;
 			pipe3_reg_we <= pipe2_reg_we;
 			pipe3_sel_reg_C <= pipe2_sel_reg_C;
-			--pipe3_sel_reg_A <= pipe2_sel_reg_A;
-			--pipe3_sel_reg_B <= pipe2_sel_reg_B;
 		end if;
 	end process;
 
 	-- mux de selecao de entrada do register file
 	with pipe3_sel_data select
 	reg_data <=	pipe3_alu_s when "00",
-							pipe3_mem_data_out when "01",
-							pipe3_pc_inc when "10",
-							X"0000" when others;
+					pipe3_mem_data_out when "01",
+					pipe3_pc_inc when "10",
+					X"0000" when others;
 
 end Behavioral;
