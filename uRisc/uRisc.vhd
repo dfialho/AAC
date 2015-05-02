@@ -271,18 +271,16 @@ architecture Behavioral of uRisc is
 	signal btb_jmp_addr : std_logic_vector(15 downto 0) := (others => '0');			-- endereco de salto
 
 	-- sinais de resolução de conflitos de controlo
-	signal stop_pipeline : std_logic := '0';																			-- indica se é necessário parar o pipeline
-	signal instr_to_decode : std_logic_vector(15 downto 0) := (others => '0');		-- instrução para ser descodificada
-
-	signal pc_mux_out : std_logic_vector(15 downto 0) := (others => '0');			-- saida do mux que seleciona se próximo PC vem da BTB ou do bloco NextPC
 	signal to_jmp : std_logic := '0';															-- sinal que indica que foi feito um salto
 	signal btb_we : std_logic := '0';															-- write enable da BTB
 	signal smash : std_logic := '0';																-- indicar que se pretende esmagar instruções anteriores
 
-begin
+	-- sinais do bloco de next pc
+	signal mux_op_pc : std_logic_vector(15 downto 0) := (others => '0');				-- valor do pc tendo em conta a operacao e condicao de salto
+	signal mux_taken_pc : std_logic_vector(15 downto 0) := (others => '0');			-- valor do pc dependente se o salto foi tomado ou nao
+	signal mux_smash_pc : std_logic_vector(15 downto 0) := (others => '0');			-- valor do pc tendo em conta se a operacao no fetch é para ser esmagada
 
-	-- mux de entrada do PC; permite seleionar se o próximo PC vem da BTB ou do bloco NextPC
-	pc_mux_out <= btb_jmp_addr when taken = '1' else pc_next;
+begin
 
 	-- write enable do pc
 	pc_we <= not stall_forward;
@@ -292,7 +290,7 @@ begin
 	begin
 		if clk'event and clk = '1' then
 			if pc_we = '1' then
-				pc <= pc_mux_out;
+				pc <= pc_next;
 			end if;
 		end if;
 	end process;
@@ -498,15 +496,30 @@ begin
 		sel_PC => sel_PC
 	);
 
-	-- somador do PC + 1 + jp
+	------------------------------------
+	-- determinar proximo valor do PC --
+	------------------------------------
+
+	-- somador do PC+1 do andar de ID + jmp
 	pc_jmp <= pipe1_pc_inc + jmp;
 
 	-- mux de selecao do proximo PC
 	with sel_PC select
-	pc_next <=	pc_inc when "00",
+	mux_op_pc <=	pc_inc when "00",	-- PC+1 do fetch
 					pc_jmp when "01",
+					reg_B when "10",	-- testar se isto esta correcto
 					reg_B when "11",
 					X"0000" when others;
+
+	-- mux que seleciona o proximo PC tendo em conta se o salto foi tomado ou nao
+	mux_taken_pc <= pipe1_pc_inc when pipe1_taken = '1' else mux_op_pc;
+
+	-- mux que seleciona o proximo PC tendo em conta se a operacao no fetch é para ser esmagada
+	mux_smash_pc <= mux_taken_pc when smash = '1' else pc_inc;
+
+	-- mux que seleciona se o pc é carregado com o endereço determinado no andar de ID ou com o endereço aramzenado na BTB
+	-- o pc só é caregado com o endereço da BTB caso o salto seja para ser tomado e não se pretenda esmagar a operação no andar de fetch
+	pc_next <= btb_jmp_addr when (taken and (not smash)) = '1' else mux_smash_pc;
 
 	-- memoria de dados
 	Inst_data_ram : Data_RAM port map (
