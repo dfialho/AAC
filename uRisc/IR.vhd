@@ -19,20 +19,13 @@ architecture Behavioral of DualPortMemory is
   type MEM_TYPE is array (0 to (2**ADDR_SIZE)-1) of STD_LOGIC_VECTOR(15 downto 0);
   -- declare a constant with the memory initial value
 	constant InitValue : MEM_TYPE := (
-	0 	=> X"f00e",
-	1 	=> X"f400",
-	2 	=> X"6812",
-	3 	=> X"8ab0",
-	4 	=> X"b0f0",
-	5 	=> X"92b0",
-	6 	=> X"980a",
-	7 	=> X"a0f0",
-	8 	=> X"82e3",
-	9 	=> X"a9a8",
-	10 	=> X"05f8",
-	11 	=> X"0000",
-	12 	=> X"2fff",
-	13 	=> X"0000",
+	0 	=> X"4803",
+	1 	=> X"8988",
+	2 	=> X"05fe",
+	3 	=> X"90d0",
+	4 	=> X"98d8",
+	5 	=> X"2fff",
+	6 	=> X"0000",
 	others => X"0000");
   -- value for all addresses not previously defined
   -- declare the signal correspondent to the RAM memory
