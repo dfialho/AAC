@@ -285,7 +285,7 @@ begin
 	pc_mux_out <= btb_jmp_addr when taken = '1' else pc_next;
 
 	-- write enable do pc
-	pc_we <= stall_forward;
+	pc_we <= not stall_forward;
 
 	-- registo do PC; este registo nao precisa de enable porque esta sempre a ser actualizado
 	process(clk)
@@ -499,11 +499,11 @@ begin
 	);
 
 	-- somador do PC + 1 + jp
-	pc_jmp <= pc_inc + jmp;
+	pc_jmp <= pipe1_pc_inc + jmp;
 
 	-- mux de selecao do proximo PC
 	with sel_PC select
-	pc_next <=	pipe1_pc_inc when "00",
+	pc_next <=	pc_inc when "00",
 					pc_jmp when "01",
 					reg_B when "11",
 					X"0000" when others;
