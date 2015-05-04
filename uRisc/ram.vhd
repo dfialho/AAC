@@ -32,8 +32,19 @@ end entity;
 architecture Behavorial of Data_RAM is
 	type MEM_TYPE is array (0 to (2**ADDR_WIDTH)-1) of STD_LOGIC_VECTOR(15 downto 0);
 	constant InitValue : MEM_TYPE := (
-	7 	=> X"0001",
-	8 	=> X"0001",
+	77 	=> X"000c",
+	78 	=> X"0007",
+	79 	=> X"000b",
+	80 	=> X"0013",
+	81 	=> X"0011",
+	82 	=> X"0015",
+	83 	=> X"0009",
+	84 	=> X"0017",
+	85 	=> X"000f",
+	86 	=> X"0005",
+	87 	=> X"0003",
+	88 	=> X"0001",
+	89 	=> X"000d",
 	others => X"0000");
 
 	shared variable mem : MEM_TYPE := InitValue;

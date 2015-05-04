@@ -1,20 +1,20 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    14:47:14 03/08/2015 
--- Design Name: 
--- Module Name:    CheckCond - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
+-- Company:
+-- Engineer:
 --
--- Dependencies: 
+-- Create Date:    14:47:14 03/08/2015
+-- Design Name:
+-- Module Name:    CheckCond - Behavioral
+-- Project Name:
+-- Target Devices:
+-- Tool versions:
+-- Description:
 --
--- Revision: 
+-- Dependencies:
+--
+-- Revision:
 -- Revision 0.01 - File Created
--- Additional Comments: 
+-- Additional Comments:
 --
 ----------------------------------------------------------------------------------
 library IEEE;
@@ -30,16 +30,15 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity CheckCond is
-    Port ( 
+    Port (
     	-- Inputs 
-    	clk : in  std_logic;
 		cond : in  std_logic_vector (3 downto 0);
 		flag_zero : in  std_logic;
 		flag_negative : in  std_logic;
 		flag_carry : in  std_logic;
 		flag_overflow : in  std_logic;
 		opcode : in  std_logic_vector (1 downto 0);
-		
+
 		-- Outputs
 		sel_PC : out  std_logic_vector(1 downto 0)
 	);
@@ -50,9 +49,9 @@ architecture Behavioral of CheckCond is
 	signal cond_op : std_logic;		-- resultado obtido a partir do sinal da condicao
 	signal c2_1 : std_logic;		-- valor de cond_op quando C2 é 1
 	signal c2_0 : std_logic;		-- valor de cond_op quando C2 é 0
-	
+
 begin
-	
+
 	c0_xnor_c1 <= cond(0) xnor cond(1);
 
 	-- cond_op para cond(2) = 0
@@ -69,4 +68,3 @@ begin
 	sel_PC(1) <= opcode(1) and opcode(0) ;
 
 end Behavioral;
-

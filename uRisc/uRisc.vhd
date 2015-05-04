@@ -68,7 +68,6 @@ architecture Behavioral of uRisc is
 	    	ADDR_SIZE : positive := 16
 	  	);
 	  	Port(
-		    clk : in std_logic;
 		    addr: in std_logic_vector(ADDR_SIZE - 1 downto 0);
 		    do  : out std_logic_vector(15 downto 0)
 	  	);
@@ -100,7 +99,6 @@ architecture Behavioral of uRisc is
 	component CheckCond
 		Port (
 			-- Inputs
-	    	clk : in  std_logic;
 			cond : in  std_logic_vector (3 downto 0);
 			flag_zero : in  std_logic;		-- Z
 			flag_negative : in  std_logic;	-- N
@@ -320,7 +318,6 @@ begin
 	Inst_rom : DualPortMemory port map (
         -- Input
         addr => pc,
-        clk => clk,
         -- Output
         do => instr
 	);
@@ -473,7 +470,6 @@ begin
 	-- bloco de verificacao de condicao de salto
 	Inst_CheckCond : CheckCond port map (
 		-- Inputs
-  	clk => clk,
 		cond => cond_jmp,
 		flag_zero => flag_Z,
 		flag_negative => flag_N,
