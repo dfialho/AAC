@@ -287,6 +287,10 @@ architecture Behavioral of uRisc is
 	signal mux_taken_pc : std_logic_vector(15 downto 0) := (others => '0');			-- valor do pc dependente se o salto foi tomado ou nao
 	signal mux_smash_pc : std_logic_vector(15 downto 0) := (others => '0');			-- valor do pc tendo em conta se a operacao no fetch é para ser esmagada
 
+
+	signal prediction_miss_count : std_logic_vector(15 downto 0) := (others => '0');
+	signal cycle_count : std_logic_vector(15 downto 0) := (others => '0');
+
 begin
 
 	-- registo do PC; este registo nao precisa de enable porque esta sempre a ser actualizado
@@ -535,5 +539,22 @@ begin
 					pipe3_mem_data_out when "01",
 					pipe3_pc_inc when "10",
 					X"0000" when others;
+
+	-- registo que conta falha na predicao de salto
+	process(clk)
+	begin
+		if clk'event and clk = '1' then
+			if smash = '1' then
+				prediction_miss_count <= prediction_miss_count + '1';
+			end if;
+		end if;
+	end process;
+
+	process(clk)
+	begin
+		if clk'event and clk = '1' then
+			cycle_count <= cycle_count + '1';
+		end if;
+	end process;
 
 end Behavioral;
