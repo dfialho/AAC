@@ -8,16 +8,23 @@ entity forward_selector is
       sel_regB : in std_logic_vector(2 downto 0);   		-- selector do registo B
       regA_en : in std_logic;                       		-- indica se se pretende ler do registo A
       regB_en : in std_logic;                       		-- indica se se pretende ler do registo B
-      sel_regC_ex : in std_logic_vector(2 downto 0);		-- selector do registo de escrita no andar EX/MEM
+
+		sel_regC_ex : in std_logic_vector(2 downto 0);		-- selector do registo de escrita no andar EX/MEM
 		sel_regC_wb : in std_logic_vector(2 downto 0);		-- selector do registo de escrita no andar WB
 		regC_en_ex : in std_logic;									-- enable do registo de escrita no andar EX/MEM
 		regC_en_wb : in std_logic;									-- enable do registo de escrita no andar WB
-		alu_op : in std_logic_vector(4 downto 0);				-- operao a ser executada na ALU
+
+		ex_op : in std_logic_vector(4 downto 0);				-- operao a ser executada no andar de execução
+
+		forward_alu : in std_logic_vector(15 downto 0);		-- sinal de forward da ALU
+		forward_mem : in std_logic_vector(15 downto 0);		-- sinal de forward da memória
+		forward_wb : in std_logic_vector(15 downto 0);		-- sinal de forward do andar de write back
 
 		-- Ouput
-		sel_regA_src : out std_logic_vector(1 downto 0);	-- selector da origem do registo A
-		sel_regB_src : out std_logic_vector(1 downto 0);	-- selector da origem do registo B
-		stall : out std_logic										-- indica que  necessrio fazer Stall
+		sel_regA_forward : out std_logic;						-- indica que o registo A vem do sinal de forward
+		sel_regB_forward : out std_logic;						-- indica que o registo B vem do sinal de forward
+		forward_regA : out std_logic_vector(15 downto 0);	-- sinal de forward a ser carregado para o operador A da ALU
+		forward_regB : out std_logic_vector(15 downto 0)	-- sinal de forward a ser carregado para o operador B da ALU
 	);
 end forward_selector;
 
@@ -26,25 +33,22 @@ architecture Behavioral of forward_selector is
 	signal loap_op : std_logic := '0';
 	-- sinais para definir fonte do registo A
 	signal regA_forward_ex : std_logic := '0';
-	signal regA_forward_ex_prev : std_logic := '0';
 	signal regA_forward_wb : std_logic := '0';
 	signal regA_ex_equal : std_logic := '0';
 	signal regA_wb_equal : std_logic := '0';
+	signal regA_forward_ex_src : std_logic_vector(15 downto 0) := (others => '0');
 
 	-- sinais para definir fonte do registo B
 	signal regB_forward_ex : std_logic := '0';
-	signal regB_forward_ex_prev : std_logic := '0';
 	signal regB_forward_wb : std_logic := '0';
 	signal regB_ex_equal : std_logic := '0';
 	signal regB_wb_equal : std_logic := '0';
-
-	-- sinais para indicar execucao de operacao de instrucao NOP
-	signal stall_A : std_logic := '0';
-	signal stall_B : std_logic := '0';
+	signal regB_forward_ex_src : std_logic_vector(15 downto 0) := (others => '0');
 
 begin
 
-	loap_op <= '1' when alu_op = "01010" else '0';
+	-- identificar se a operação no andar de ex/mem é um LOAD da memória
+	loap_op <= '1' when ex_op = "01010" else '0';
 
 	--------------------------------------------------
 	-- circuito que seleciona a origem do registo A --
@@ -56,17 +60,16 @@ begin
 
 	-- circuito de fonte do EX/MEM
 	regA_ex_equal <= '1' when sel_regA = sel_regC_ex else '0';
-	regA_forward_ex_prev <= regC_en_ex and regA_en and regA_ex_equal;
-	regA_forward_ex <= regA_forward_ex_prev and not(loap_op);
+	regA_forward_ex <= regC_en_ex and regA_en and regA_ex_equal;
 
-	-- o bit mais significativo do sinal de selecao de saida indica se o valor do registo A vem
-	-- de algum forward ou directamente do file register
-	sel_regA_src(1) <= regA_forward_ex or regA_forward_wb;
+	-- selecionar sinal de forward caso um o registo de leitura esteja a ser escrito num dos andares de ex/mem ou wb
+	sel_regA_forward <= regA_forward_ex or regA_forward_wb;
 
-	-- o bit menos significativo do sinal de selecao de saida indica se o valor do registo A vem
-	-- do andar de WB ou EX/MEM caso seja necessario fazer forward
-	-- no caso de nao ser necessario fazer forward este bit  ignorado
-	sel_regA_src(0) <= not regA_forward_ex;
+	-- mux que seleciona se o forward do andar de ex/mem vem da memoria ou da ALU
+	regA_forward_ex_src <= forward_mem when loap_op = '1' else forward_alu;
+
+	-- mux que seleciona se o forward vem do andar de ex/mem ou wb
+	forward_regA <= regA_forward_ex_src when regA_forward_ex = '1' else forward_wb;
 
 	--------------------------------------------------
 	-- circuito que seleciona a origem do registo B --
@@ -78,25 +81,15 @@ begin
 
 	-- circuito de fonte do EX/MEM
 	regB_ex_equal <= '1' when sel_regB = sel_regC_ex else '0';
-	regB_forward_ex_prev <= regC_en_ex and regB_en and regB_ex_equal;
-	regB_forward_ex <= regB_forward_ex_prev and not(loap_op);
+	regB_forward_ex <= regC_en_ex and regB_en and regB_ex_equal;
 
-	-- o bit mais significativo do sinal de selecao de saida indica se o valor do registo B vem
-	-- de algum forward ou directamente do file register
-	sel_regB_src(1) <= regB_forward_ex or regB_forward_wb;
+	-- selecionar sinal de forward caso um o registo de leitura esteja a ser escrito num dos andares de ex/mem ou wb
+	sel_regB_forward <= regB_forward_ex or regB_forward_wb;
 
-	-- o bit menos significativo do sinal de selecao de saida indica se o valor do registo B vem
-	-- do andar de WB ou EX/MEM caso seja necessario fazer forward
-	-- no caso de nao ser necessario fazer forward este bit  ignorado
-	sel_regB_src(0) <= not regB_forward_ex;
+	-- mux que seleciona se o forward do andar de ex/mem vem da memoria ou da ALU
+	regB_forward_ex_src <= forward_mem when loap_op = '1' else forward_alu;
 
-	-------------------------------------------------------------------------------------------------
-	-- Circuito que indica se  preciso fazer Stall 															  --
-	--  necessario fazer Stall quando  necessario fazer forward do andar de EX/MEM e a instrucao --
-	-- que se encontra nesse andar corresponde a um LOAD da memria (01010)								  --
-	-------------------------------------------------------------------------------------------------
-	stall_A <= regA_forward_ex_prev and not(regA_forward_ex);
-	stall_B <= regB_forward_ex_prev and not(regB_forward_ex);
-	stall <= stall_A or stall_B;
+	-- mux que seleciona se o forward vem do andar de ex/mem ou wb
+	forward_regB <= regB_forward_ex_src when regB_forward_ex = '1' else forward_wb;
 
 end Behavioral;

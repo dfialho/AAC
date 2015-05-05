@@ -166,19 +166,26 @@ architecture Behavioral of uRisc is
 		port(
 			-- Input
 			sel_regA : in std_logic_vector(2 downto 0);			-- selector do registo A
-	      sel_regB : in std_logic_vector(2 downto 0);   		-- selector do registo B
-	      regA_en : in std_logic;                       		-- indica se se pretende ler do registo A
-	      regB_en : in std_logic;                       		-- indica se se pretende ler do registo B
-	      sel_regC_ex : in std_logic_vector(2 downto 0);		-- selector do registo de escrita no andar EX/MEM
+			sel_regB : in std_logic_vector(2 downto 0);   		-- selector do registo B
+			regA_en : in std_logic;                       		-- indica se se pretende ler do registo A
+			regB_en : in std_logic;                       		-- indica se se pretende ler do registo B
+
+			sel_regC_ex : in std_logic_vector(2 downto 0);		-- selector do registo de escrita no andar EX/MEM
 			sel_regC_wb : in std_logic_vector(2 downto 0);		-- selector do registo de escrita no andar WB
 			regC_en_ex : in std_logic;									-- enable do registo de escrita no andar EX/MEM
 			regC_en_wb : in std_logic;									-- enable do registo de escrita no andar WB
-			alu_op : in std_logic_vector(4 downto 0);				-- operação a ser executada na ALU
+
+			ex_op : in std_logic_vector(4 downto 0);				-- operao a ser executada no andar de execução
+
+			forward_alu : in std_logic_vector(15 downto 0);		-- sinal de forward da ALU
+			forward_mem : in std_logic_vector(15 downto 0);		-- sinal de forward da memória
+			forward_wb : in std_logic_vector(15 downto 0);		-- sinal de forward do andar de write back
 
 			-- Ouput
-			sel_regA_src : out std_logic_vector(1 downto 0);	-- selector da origem do registo A
-			sel_regB_src : out std_logic_vector(1 downto 0);	-- selector da origem do registo B
-			stall : out std_logic										-- indica que é necessário fazer Stall
+			sel_regA_forward : out std_logic;						-- indica que o registo A vem do sinal de forward
+			sel_regB_forward : out std_logic;						-- indica que o registo B vem do sinal de forward
+			forward_regA : out std_logic_vector(15 downto 0);	-- sinal de forward a ser carregado para o operador A da ALU
+			forward_regB : out std_logic_vector(15 downto 0)	-- sinal de forward a ser carregado para o operador B da ALU
 		);
 	end component;
 
@@ -220,7 +227,7 @@ architecture Behavioral of uRisc is
 	signal mem_data_out : std_logic_vector(15 downto 0) := (others => '0'); -- sinal de saida de dados da memoria
 
 	-- sinais da ALU
-	signal sel_A : std_logic;														-- seleciona saida do mux A
+	signal sel_A : std_logic := '0';														-- seleciona saida do mux A
 	signal alu_A : std_logic_vector(15 downto 0) := (others => '0');	-- entrada A da ALU
 	signal alu_OP : std_logic_vector(4 downto 0) := (others => '0');	-- sinal de selecao da operacao da ALU
 	signal alu_flags : std_logic_vector(3 downto 0) := (others => '0');	-- sinais das flags apos uma operacao da ALU
@@ -228,9 +235,11 @@ architecture Behavioral of uRisc is
 	signal const : std_logic_vector(15 downto 0) := (others => '0');	-- valor da constante para a ALU
 
 	-- sinais usados para o forwarding
-	signal sel_regA_src : std_logic_vector(1 downto 0) := (others => '0');
-	signal sel_regB_src : std_logic_vector(1 downto 0) := (others => '0');
-	signal stall_forward : std_logic := '0';
+	signal sel_regA_src : std_logic := '0';
+	signal sel_regB_src : std_logic := '0';
+	signal forward_regA : std_logic_vector(15 downto 0) := (others => '0');	-- sinal de forward do registo A
+	signal forward_regB : std_logic_vector(15 downto 0) := (others => '0');	-- sinal de forward do registo B
+
 	-- sinais usados nos muxes de forwarding
 	signal mux_A_out : std_logic_vector(15 downto 0) := (others => '0');
 	signal alu_B : std_logic_vector(15 downto 0) := (others => '0');	-- entrada B da ALU
@@ -282,19 +291,11 @@ architecture Behavioral of uRisc is
 
 begin
 
-	-- sinal que nao serve para nada apenas para o xilinx ficar contente e não nos chamar de estupidos
-	output <= stall_forward;
-
-	-- write enable do pc
-	pc_we <= not stall_forward;
-
 	-- registo do PC; este registo nao precisa de enable porque esta sempre a ser actualizado
 	process(clk)
 	begin
 		if clk'event and clk = '1' then
-			if pc_we = '1' then
-				pc <= pc_next;
-			end if;
+			pc <= pc_next;
 		end if;
 	end process;
 
@@ -325,21 +326,19 @@ begin
 	);
 
 	-- primeiro andar de pipeline
-	process(clk, stall_forward)
+	process(clk)
 	begin
-		if clk'event and clk = '1' and stall_forward = '0' then
+		if clk'event and clk = '1'then
 			if smash = '1' then
 				pipe1_instruction <= X"0000";
 				pipe1_pc_inc <= X"0000";
 				pipe1_pc <= X"0000";
 				pipe1_taken <= '0';
-				--pipe1_btb_jmp_addr <= X"0000";
 			else
 				pipe1_instruction <= instr;
 				pipe1_pc_inc <= pc_inc;
 				pipe1_pc <= pc;
 				pipe1_taken <= taken;
-				--pipe1_btb_jmp_addr <= btb_jmp_addr;
 			end if;
 		end if;
 	end process;
@@ -381,19 +380,9 @@ begin
 	-- muxes de selecao da entrada A e B da ALU
 	mux_A_out <= reg_A when sel_A = '1' else const;
 
-	with sel_regA_src select
-	alu_A <= mux_A_out when "00",
-				mux_A_out when "01",
-				alu_S when "10",
-				reg_data when "11",
-				X"0000" when others;
-
-	with sel_regB_src select
-	alu_B <= reg_B when "00",
-				reg_B when "01",
-				alu_S when "10",
-				reg_data when "11",
-				X"0000" when others;
+	-- muxes que selecionam se os registos de leitura vem do register file ou do sinal de forwarding
+	alu_A <= forward_regA when sel_regA_src = '1' else mux_A_out;
+	alu_B <= forward_regB when sel_regB_src = '1' else reg_B;
 
 	inst_forward_selector: forward_selector port map (
 		-- Input
@@ -401,19 +390,24 @@ begin
       sel_regB => sel_reg_B,
       regA_en => sel_A,
       regB_en => '1',
-      sel_regC_ex => pipe2_sel_reg_C,
+
+		sel_regC_ex => pipe2_sel_reg_C,
 		sel_regC_wb => pipe3_sel_reg_C,
 		regC_en_ex => pipe2_reg_we,
 		regC_en_wb => pipe3_reg_we,
-		alu_op => pipe2_alu_op,
+
+		ex_op => pipe2_alu_op,
+
+		forward_alu => alu_S,
+		forward_mem => mem_data_out,
+		forward_wb => reg_data,
 
 		-- Ouput
-		sel_regA_src => sel_regA_src,
-		sel_regB_src => sel_regB_src,
-		stall => stall_forward
+		sel_regA_forward => sel_regA_src,
+		sel_regB_forward => sel_regB_src,
+		forward_regA => forward_regA,
+		forward_regB => forward_regB
 	);
-
-	pipe2_rst <= stall_forward;
 
 	-- determinar se foi feito um salto
 	to_jmp <= sel_PC(0) or sel_PC(1);
@@ -428,24 +422,15 @@ begin
 	process(clk)
 	begin
 		if clk'event and clk = '1' then
-			if pipe2_rst = '1' then
-				pipe2_mem_we <= '0';
-				pipe2_reg_we <= '0';
-				pipe2_flags_we <= "0000";
-			else
-				pipe2_pc_inc <= pipe1_pc_inc;
-				--pipe2_jmp_cond <= cond_jmp;
-				--pipe2_jmp_op <= op_jmp;
-				--pipe2_jmp_dest <= jmp;
-				pipe2_alu_op <= alu_OP;
-				pipe2_mem_we <= mem_we;
-				pipe2_sel_reg_C <= sel_reg_C;
-				pipe2_reg_we <= reg_we;
-				pipe2_sel_data <= sel_data;
-				pipe2_A <= alu_A;
-				pipe2_B <= alu_B;
-				pipe2_flags_we <= flags_we;
-			end if;
+			pipe2_pc_inc <= pipe1_pc_inc;
+			pipe2_alu_op <= alu_OP;
+			pipe2_mem_we <= mem_we;
+			pipe2_sel_reg_C <= sel_reg_C;
+			pipe2_reg_we <= reg_we;
+			pipe2_sel_data <= sel_data;
+			pipe2_A <= alu_A;
+			pipe2_B <= alu_B;
+			pipe2_flags_we <= flags_we;
 		end if;
 	end process;
 
