@@ -8,16 +8,23 @@ entity forward_selector is
       sel_regB : in std_logic_vector(2 downto 0);   		-- selector do registo B
       regA_en : in std_logic;                       		-- indica se se pretende ler do registo A
       regB_en : in std_logic;                       		-- indica se se pretende ler do registo B
-      sel_regC_ex : in std_logic_vector(2 downto 0);		-- selector do registo de escrita no andar EX/MEM
+
+		sel_regC_ex : in std_logic_vector(2 downto 0);		-- selector do registo de escrita no andar EX/MEM
 		sel_regC_wb : in std_logic_vector(2 downto 0);		-- selector do registo de escrita no andar WB
 		regC_en_ex : in std_logic;									-- enable do registo de escrita no andar EX/MEM
 		regC_en_wb : in std_logic;									-- enable do registo de escrita no andar WB
-		alu_op : in std_logic_vector(4 downto 0);				-- operao a ser executada na ALU
+
+		ex_op : in std_logic_vector(4 downto 0);				-- operao a ser executada no andar de execução
+
+		forward_alu : in std_logic_vector(15 downto 0);		-- sinal de forward da ALU
+		forward_mem : in std_logic_vector(15 downto 0);		-- sinal de forward da memória
+		forward_wb : in std_logic_vector(15 downto 0);		-- sinal de forward do andar de write back
 
 		-- Ouput
-		sel_regA_src : out std_logic_vector(1 downto 0);	-- selector da origem do registo A
-		sel_regB_src : out std_logic_vector(1 downto 0);	-- selector da origem do registo B
-		stall : out std_logic										-- indica que  necessrio fazer Stall
+		sel_regA_src : out std_logic_vector(1 downto 0);	-- selecciona se o registo A vem do register file ou de um sinal de forward
+		sel_regB_src : out std_logic_vector(1 downto 0);	-- selecciona se o registo B vem do register file ou de um sinal de forward
+		forward_A : out std_logic_vector(15 downto 0);		-- sinal de forward a ser carregado para o operador A da ALU
+		forward_B : out std_logic_vector(15 downto 0)		-- sinal de forward a ser carregado para o operador A da ALU
 	);
 end forward_selector;
 
