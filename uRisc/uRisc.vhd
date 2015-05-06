@@ -34,6 +34,8 @@ use IEEE.STD_LOGIC_SIGNED.ALL;
 entity uRisc is
 	port(
 		clk : in std_logic;
+		prediction_miss_count_out : out std_logic_vector(15 downto 0);
+		cycle_count_out : out std_logic_vector(15 downto 0);
 		output : out std_logic
 	);
 end uRisc;
@@ -286,7 +288,6 @@ architecture Behavioral of uRisc is
 	signal mux_op_pc : std_logic_vector(15 downto 0) := (others => '0');				-- valor do pc tendo em conta a operacao e condicao de salto
 	signal mux_taken_pc : std_logic_vector(15 downto 0) := (others => '0');			-- valor do pc dependente se o salto foi tomado ou nao
 	signal mux_smash_pc : std_logic_vector(15 downto 0) := (others => '0');			-- valor do pc tendo em conta se a operacao no fetch é para ser esmagada
-
 
 	signal prediction_miss_count : std_logic_vector(15 downto 0) := (others => '0');
 	signal cycle_count : std_logic_vector(15 downto 0) := (others => '0');
@@ -556,5 +557,8 @@ begin
 			cycle_count <= cycle_count + '1';
 		end if;
 	end process;
+
+	cycle_count_out <= cycle_count;
+	prediction_miss_count_out <= prediction_miss_count;
 
 end Behavioral;
