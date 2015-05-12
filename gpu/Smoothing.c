@@ -3,18 +3,18 @@
 #include <stdlib.h>
 
 void generateData(double vectY[], const double vectX[], size_t vectXSize) {
-  for (int i = 0; i < vectXSize; i++) {
+  for (size_t i = 0; i < vectXSize; i++) {
     vectY[i] = sin(0.02 * vectX[i]) + sin(0.001 * vectX[i]) + 0.1 * (rand() / (1.0 * RAND_MAX));
   }
 }
 
 int main() {
 
-  int N = 10000;  // numero de ponto no dataset
+  size_t N = 10000;  // numero de ponto no dataset
   int smooth = 4; // parametro de suavidade
 
   // criar o dataset de entrada
-  double *x = malloc(N * sizeof(double));
+  double *x = (double*) malloc(N * sizeof(double));
   for (size_t i = 0; i < N; i++) {
     x[i] = i / 10.0;
   }
@@ -23,12 +23,12 @@ int main() {
   //   printf("x[%d] = %lf\n", i, x[i]);
   // }
 
-  double *y = malloc(N * sizeof(double));
+  double *y = (double*) malloc(N * sizeof(double));
   generateData(y, x, N);
 
   // inicializar o yest
-  double *yest = malloc(N * sizeof(double));
-  for (int i = 0; i < N; i++) {
+  double *yest = (double*) malloc(N * sizeof(double));
+  for (size_t i = 0; i < N; i++) {
     yest[i] = 0.0;
   }
 
@@ -44,7 +44,7 @@ int main() {
     yest[i] = sumA / sumB;
   }
 
-  for (int i = 0; i < N; i++) {
+  for (size_t i = 0; i < N; i++) {
     printf("yest[%d] = %lf\n", i, yest[i]);
   }
 }
