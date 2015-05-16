@@ -4,7 +4,6 @@
 
 #define CPUonly
 
-#ifdef CPUonly
 void generateData(double vectY[], const double vectX[], size_t vectXSize)
 {
   for (size_t i = 0; i < vectXSize; i++)
@@ -12,16 +11,6 @@ void generateData(double vectY[], const double vectX[], size_t vectXSize)
     vectY[i] = sin(0.02 * vectX[i]) + sin(0.001 * vectX[i]) + 0.1 * (rand() / (1.0 * RAND_MAX));
   }
 }
-#else
-__global__ void generateData(double vectY[], const double vectX[], size_t vectXSize)
-{
-  size_t i = threadIdx.x;
-  if (i < vectXSize)
-  {
-    vectY[i] = sin(0.02 * vectX[i]) + sin(0.001 * vectX[i]) + 0.1 /** (rand() / (1.0 * RAND_MAX))*/;
-  }
-}
-#endif
 
 #ifdef CPUonly
 void aproximateValues(double y[], double x[], double yest[], int smooth, size_t N)
@@ -44,7 +33,7 @@ __global__ void aproximateValues(double y[], double x[], double yest[], int smoo
       sumA = sumA + temp * y[j];
       sumB = sumB + temp;
     }
-    yest[i] = sumA /sumB;
+    yest[i] = sumA/sumB;
   }
 }
 
@@ -65,8 +54,9 @@ int main()
   }
   memset(yest, 0, N*sizeof(double));
 
-#ifdef CPUonly
   generateData(y, x, N);
+
+#ifdef CPUonly  
   aproximateValues(y, x, yest, smooth, N);
 #else
   double* d_x;
@@ -80,12 +70,10 @@ int main()
   cudaMemcpy(d_x, x, N*sizeof(double), cudaMemcpyHostToDevice);
   cudaMemcpy(d_yest, yest, N*sizeof(double), cudaMemcpyHostToDevice);
 
-  generateData << <1, N >> > (d_y, d_x, N);
   aproximateValues << <1, N >> > (d_y, d_x, d_yest, smooth, N);
 
   cudaMemcpy(yest, d_yest, N*sizeof(double), cudaMemcpyDeviceToHost);
 #endif
-
   for (size_t i = 0; i < N; i++)
   {
     printf("yest[%d] = %lf\n", i, yest[i]);
