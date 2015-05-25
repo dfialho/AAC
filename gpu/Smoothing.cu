@@ -42,7 +42,8 @@ void aproximateValuesCPU(float y[], float x[], float yest[], int smooth)
 
 __global__ void aproximateValuesGPU(float y[], float x[], float yest[], int smooth)
 {
-    size_t i = threadIdx.x;
+    size_t i = blockDim.x * blockIdx.x + threadIdx.x;
+
     if (i < N)
     {
         float sumA = 0.0;
@@ -139,16 +140,18 @@ int main()
 
     printf(" ... CUDA kernel launch with %d blocks of %d threads ...\n", N/1024, 1024);
     // Máximo de 1024 threads concorrentes!
-    for (size_t k = 0; k < N; k += 1024)
+
+    int blockDim = 1024;
+    int gridDim = N / 1024 + (N % 1024 > 0);
+    aproximateValuesGPU <<< gridDim, blockDim>>>(d_y, d_x, d_yest, smooth);
+
+    err[0] = cudaGetLastError();
+    if (err[0] != cudaSuccess)
     {
-        aproximateValuesGPU << <1, (N - k > 1024 ? 1024 : N - k) >> >(d_y + k, d_x + k, d_yest + k, smooth);
-        err[0] = cudaGetLastError();
-        if (err[0] != cudaSuccess)
-        {
-            fprintf(stderr, "Failed to launch yest calculation kernel (error code %s)!\n", cudaGetErrorString(err[0]));
-            exit(EXIT_FAILURE);
-        }
+        fprintf(stderr, "Failed to launch yest calculation kernel (error code %s)!\n", cudaGetErrorString(err[0]));
+        exit(EXIT_FAILURE);
     }
+
     clock_gettime(CLOCK_REALTIME, &timeVect[4]);
 
     printf("Copy output data from the CUDA device to the host memory\n");
@@ -187,22 +190,33 @@ int main()
     printf("          - freeing data on the device         -> %.6f seconds\n",timeGPU[5]);
     printf("----------------------------------------------------------------------------\n");
 
+    FILE *inputFile = fopen("input", "w");
+    FILE *cpuFile = fopen("cpu-yest", "w");
+    FILE *gpuFile = fopen("gpu-yest", "w");
+
+    if(cpuFile == NULL || gpuFile == NULL) {
+        printf("ficheiro não pode ser criado\n");
+    }
+
+    for (size_t i = 0; i < N; i++) {
+        fprintf(inputFile, "%.30f\n", y[i]);
+        fprintf(cpuFile, "%.30f\n", yestCPU[i]);
+        fprintf(gpuFile, "%.30f\n", yest[i]);
+    } 
+
     int errors = 0;
     float avgerror=0;
-    for (size_t i = 0; i < N; i+=32)
+    for (size_t i = 0; i < N; i++)
     {
         if (yest[i] != yestCPU[i])
         {
-            //printf("error found: yestCPU[%d] = %f : yestCPU[%d] = %f : error = %.24f\n", i, yestCPU[i], i, yest[i], yestCPU[i]-yest[i]);
             errors++;
             avgerror +=  abs(yestCPU[i]-yest[i]);
         }
-        //    printf(":( > yestCPU[%d] = %f\n", i, yestCPU[i]);
-        //printf("yest[%d] = %f\n", i, yest[i]);
-    }
+    }    
 
     if(errors)
-        printf("\nTest Failed:\n\t %d errors found! (out of %d points, %d%%)\n\t average error: %f\n", errors, N, errors*100/N, avgerror/errors);    
+        printf("\nTest Failed:\n\t %d errors found! (out of %d points, %d%%)\n\t average error: %.20f\n", errors, N, errors*100/N, avgerror/errors);    
     else
         printf("Test Passes\n");
     
