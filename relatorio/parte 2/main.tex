@@ -1,0 +1,44 @@
+\documentclass[12pt,a4paper]{scrartcl}
+
+\input{includes.tex}
+\usepackage{pbox}
+
+\begin{document}
+
+\input{title.tex}
+
+\tableofcontents
+\pagenumbering{gobble}
+
+\pagebreak
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\section{Introdução}
+\input{Introduction.tex}
+
+\section{Análise dos Conflitos}
+\input{AnaliseConflitos.tex}
+
+\section{Resolução de Conflitos}
+\input{ResolucaoConflitos.tex}
+
+\section{Frequência de Funcionamento}
+\input{Frequency.tex}
+
+\section{Circuito}
+\input{Circuito.tex}
+
+\section{Conclusão}
+\input{conclusao.tex}
+
+\listoftables
+
+\listoffigures
+ 
+\pagebreak
+
+\input{appendix_vhdl.tex}
+
+\end{document}

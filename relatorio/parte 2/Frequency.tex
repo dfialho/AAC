@@ -1,0 +1,31 @@
+\paragraph{} As configurações descritas anteriormente geraram caminhos críticos diferentes: 
+
+\paragraph{} No caso da implementação com \textit{forwarding} da memória, como já foi referido o caminho começa no registo de pipeline do andar de \textit{EXE/MEM} passa pela memória de dados e termina na saída dos operandos no andar de \textit{ID}.
+
+\paragraph{} No caso da segunda implementação, o caminho crítico encontra-se no caminho de \textit{forwarding} das \textit{flags}. Começa no mesmo registo de pipeline, passa pela ALU e pelo bloco de verificação de condição de salto e termina no porto de escrita da BTB.
+
+Para cada um destes caminhos críticos obteve-se as seguintes frequências de funcionamento:
+
+\begin{itemize}
+\item Sem \textit{forwarding} da memória a frequência de operação é de 171MHz.
+\item Com \textit{forwarding} da memória a frequência de operação é de 161MHz.
+\end{itemize}
+
+Tendo em conta os resultados obtidos em termos de frequência e número de ciclos que cada teste leva para ser executados, para as 3 configurações implementadas calculou-se os tempos de execução. Estes tempos estão indicados na Tabela \ref{tab:freq_time}.
+
+\begin{table}[H]
+  \caption{Tempo de execução para as diferentes configurações}
+  \label{tab:freq_time}
+  \centering  
+  \begin{tabular}{| l | c | c | c |}
+  	\hline
+    \textbf{Programa} & 
+    \parbox{4cm}{\centering \texttt{BTB} 2 bits\\ sem \textit{forwarding} da MEM} & 
+    \parbox{4cm}{\centering \texttt{BTB} 2 bits\\ com \textit{forwarding} da MEM} & 
+    \parbox{4cm}{\centering \texttt{BTB} 1 bits\\ com \textit{forwarding} da MEM} \\ \hline
+	Teste 1 & \ 0,33 \textmu s  & \ 0,33 \textmu s  & \ 0,33 \textmu s \\ \hline
+    Teste 2 & 14,32 \textmu s   & 14,59 \textmu s   & 14,65 \textmu s  \\ \hline
+    Teste 3 & \ 7,04 \textmu s  & \ 6,82 \textmu s  & \ 6,83 \textmu s \\
+	\hline
+  \end{tabular}
+\end{table}

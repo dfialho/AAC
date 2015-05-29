@@ -1,0 +1,57 @@
+\paragraph{} Nas aulas teóricas estudou-se vários tipos de conflitos: conflitos \texttt{RAW} (\textit{Read After Write}), conflitos \texttt{WAR} (\textit{Write After Read}), conflitos \texttt{WAW} (\textit{Write After Write}), conflitos de controlo e conflitos estruturais. Dada a arquitectura implementada identificou-se que apenas ocorrem dois tipos de conflitos: conflitos do tipo \texttt{RAW} e conflitos de controlo. Identificados os tipos de conflitos gerados recorreu-se às técnicas, para resolução dos mesmos, estudadas nas aulas teóricas. 
+
+\subsection{Conflitos Não Considerados }
+
+\paragraph{} Como já foi referido alguns dos possíveis conflitos estudados não ocorrem na implementação considerada. Abaixo é dada uma explicação do porquê de alguns desses conflitos não ocorrerem.
+
+\subsubsection{Conflitos \texttt{WAR} }
+
+\paragraph{} Os conflitos \texttt{WAR} devem-se à existência de dependências de dados entre as várias instruções e surgem apenas quando se escreve num registo que ainda não foi lido por uma instrução anterior, por exemplo:
+
+% david: aqui acho melhor escrever mesmo instruções em assembly
+\begin{enumerate}
+	\item R1 = R2 + R3;
+	\item R2 = R5 + R6;
+\end{enumerate}
+
+\paragraph{} Se a instrução 2 for executada antes da instrução 1, pode ocorrer que a instrução 2 termine e esteja pronta a armazenar o seu resultado antes da instrução 1 ter lido os valores dos seus operandos. Nesta situação a instrução 2 não pode escrever no registo R2 antes que a instrução 1 tenha lido o valor de R2 actual.
+
+\paragraph{} É facilmente perceptível que para este tipo de conflitos ocorrer a execução das instruções tem de ser feita fora de ordem, ou pelo menos a leitura dos operandos não é feita sequencialmente. 
+
+\paragraph{} Uma arquitectura deste género apresenta vantagens apenas quando existem várias unidades funcionais com latências diferentes. No caso do \textmu RISC esta situação não se aplica pois só há uma \textit{ALU} de inteiros, portanto este tipo de conflitos não ocorrem.
+
+\subsubsection{Conflitos \texttt{WAW} }
+
+\paragraph{} Os conflitos \texttt{WAW} devem-se também à existência de dependências de dados e ocorrem quando duas instruções que escrevem no mesmo registo, escrevem pela ordem contrária à sequência de instruções do programa, por exemplo:
+
+\begin{enumerate}
+	\item R1 = R2 + R3;
+%    \item R0 = R1 + R3; david: esta instrução no meio podia ajudar a explicar?
+	\item R1 = R5 + R6;
+\end{enumerate}
+
+\paragraph{}No caso da instrução 2 ser executada primeiro esta não pode escrever no fim da sua execução pois a instrução 1 precisa de escrever primeiro e a instrução 2 a seguir de forma a manter coerência no conteúdo do registo R1. De novo, este tipo de conflitos só ocorrem se a escrita dos operadores for feita fora de ordem e mais uma vez, só é benéfico executar instruções fora de ordem se existirem várias unidades funcionais com latências diferentes, o que não acontece no caso do \textmu RISC.
+
+\subsubsection{Conflitos Estruturais}
+
+\paragraph{} Este tipo de conflitos ocorre quando existem mais instruções que precisam de aceder a um mesmo recurso de hardware no mesmo ciclo de relógio, do que existem 'cópias' desse recurso. Um exemplo deste tipo de conflitos é quando existem múltiplas unidades funcionais com latências diferentes e uma instrução precisa de aceder a uma unidade funcional para ser executada e esta está a ser usada para processar outra instrução. Também pode ocorrer caso se tenha apenas uma entrada no \texttt{register file} e e existam duas instruções que escrevem para o \texttt{register file} no mesmo ciclo de relógio.
+\paragraph{} Uma vez que existe apenas unidade funcional e que em cada ciclo de relógio só está pronto a escrever no \texttt{register file} uma instrução na arquitectura do \textmu RISC este conflito não ocorre.
+
+\subsection{Conflitos Considerados}
+
+\paragraph{} A introdução de pipeline na arquitectura do \textmu RISC leva ao aparecimento de dois tipos de conflitos: conflitos \texttt{RAW} e conflitos de controlo.
+
+\subsubsection{Conflitos \texttt{RAW}}
+
+\paragraph{} Estes são o tipo conflitos mais comuns e devem-se ao facto de muitas instruções precisarem do resultado da instrução anterior. Com a introdução do pipeline a leitura dos operandos é feita num ciclo de relógio diferente da escrita, desta forma pode ocorrer que o resultado de uma instrução não tenha sido armazenada no \texttt{register file} antes da instrução a seguir esteja pronta a ler o valor do seu resultado, por exemplo:
+
+\begin{enumerate}
+	\item R1 = R2 + R3;
+	\item R7 = R1 + R6;
+\end{enumerate}
+
+\paragraph{} A instrução 2 só pode ler os seus operandos quando a instrução 1 escrever no registo, caso contrário estaria a ler um operando incorrecto. Na arquitectura utilizada este é um conflito que ocorre frequentemente.
+
+\subsubsection{Conflitos de Controlo}
+
+\paragraph{} Este tipo de conflitos são causados pela existência de \textit{branches}. Uma vez que os saltos não são resolvidos no mesmo andar em que são lidos da memória de instruções isto significa que o \textit{program counter} passa para o próximo endereço de instruções mesmo quando se pretende executar um salto para outro endereço. Esta situação só pode ser corrigida num ciclo de relógio posterior quando o salto for resolvido, nesta altura é necessário anular as instruções que foram descarregadas incorrectamente.

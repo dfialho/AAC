@@ -1,0 +1,22 @@
+\paragraph{} Fazer uma comparação de \textit{performance} entre dois processadores de uso-geral com arquitecturas distintas é um processo muito complicado, mesmo com acesso a vários resultados de \textit{benchmarks}. 
+
+\paragraph{} Não é de todo justo comparar frequências de funcionamento, uma vez que estas não dão qualquer indicação sobre o número de ciclos que um dado algoritmo necessita para ser executado nesse processador. Isto é, uma arquitectura que permita que um processador tenha uma frequência de operação muito elevada pode exigir um grande número de ciclos de relógio para executar um dado algoritmo e, por conseguinte, resultar num tempo de execução desse algoritmo, mais elevado.
+
+\paragraph{} Além dos parâmetros de \textit{performance} que são disponibilizados, as pontuações obtidas por cada processador em vários \textit{benchmarks} nem sempre são uma boa indicação do nível de performance de um processador de uso-geral, uma vez que uma arquitectura pode apresentar um grande resultado para um dado \textit{benchmark} que corre certos algoritmos que vão de encontro às qualidades daquela arquitectura, mas ter um muito mau resultado noutros, cujos os algoritmos corridos não jogam a favor da arquitectura.
+
+\paragraph{} No nosso caso a comparação entre as várias configurações é mais simples uma vez que a arquitectura é basicamente a mesma. De qualquer forma há alguns aspectos que são difíceis de avaliar e decidir qual seria a melhor configuração para implementar num processador de uso-geral.
+
+\paragraph{} Se se olhar para a configuração, com mesmo número de bits no \texttt{BPB}, uma com \textit{forwarding} da memória e outra sem, verifica-se que na maioria dos testes são necessários menos ciclos de relógio para executar os testes \textbf{com} \textit{forwarding} da memória do que \textbf{sem}. Isto era de esperar uma vez que o compilador não faz qualquer tipo de optimização para ajustar o código à arquitectura e por isso a desvantagem de não ter \textit{forwarding} da memória aparece aqui de forma evidente.
+
+\paragraph{} Comparando as duas soluções apresentadas para resolver os conflitos de controlo, verifica-se no caso do \texttt{BPB} de 1 bit existe um maior número de falhas de predição do que com 2 bits, reflectindo-se de forma proporcional no número de ciclos necessários para executar cada teste. Concluindo-se assim, que a solução com um \texttt{BPB} de 2 bits apresenta melhores resultados.
+
+\paragraph{} É necessário referir que estes testes são muito pouco ilustrativos e permitem tirar poucas conclusões sobre a \textit{performance} das várias implementações pelas seguintes razões:
+
+\begin{itemize}
+\item não se tem conhecimento do algoritmo implementado por cada um dos testes;
+\item os testes não abrangem uma quantidade suficiente de algoritmos distintos para se poder inferir qual das soluções é melhor.
+\end{itemize}
+
+\paragraph{} De qualquer forma é importante notar pela Tabela \ref{tab:freq_time} que a diferença nos tempos de execução entre as várias implementações é marginal. Uma vez que, anteriormente, se constatou que a solução sem \textit{forwarding} da memória poderia ser melhor explorada por parte do compilador e tendo em conta que os tempos de execução são tão próximos da implementação com \textit{forwarding}, pode conjecturar-se que esta poderia apresentar melhores resultados.
+
+\paragraph{} Conclui-se então que a solução sem \textit{forwarding} da memória e com 2 bits de predição poderá apresentar melhores resultados para uma arquitectura de um processador de uso-geral.
