@@ -4,7 +4,7 @@
 #include <sys/time.h>
 
 //#define CPUonly
-#define N 50000 // numero de ponto no dataset
+#define N 45000 // numero de ponto no dataset
 
 
 void generateData(float vectY[], const float vectX[])
@@ -86,6 +86,8 @@ int main()
 
     generateData(y, x);
 
+	printf("using %d points\n", N);
+
 /* CPU */
     printf("Performing the computation on the CPU...\n");
     clock_gettime(CLOCK_REALTIME, &timeVect[0]);
@@ -100,8 +102,6 @@ int main()
 /* GPU */
 
     printf("Performing the computation on the GPU...\n");
-    clock_gettime(CLOCK_REALTIME, &timeVect[0]);
-    clock_gettime(CLOCK_REALTIME, &timeVect[1]);
 
     // initialize the device (just measure the time for the first call to the device)
     clock_gettime(CLOCK_REALTIME, &timeVect[0]);
@@ -180,7 +180,7 @@ int main()
     timeGPU[3] = timeDiff(timeVect[3],timeVect[4]);
     timeGPU[4] = timeDiff(timeVect[4],timeVect[5]);
     timeGPU[5] = timeDiff(timeVect[5],timeVect[6]);
-    timeGPU[6] = timeDiff(timeVect[0],timeVect[6]);
+    timeGPU[6] = timeDiff(timeVect[1],timeVect[6]);
     printf("gpu done  ... execution took %.6f seconds (speedup=%.3f), corresponging to:\n",timeGPU[6],timeCPU/timeGPU[6]);
     printf("          - first call to the device           -> %.6f seconds\n",timeGPU[0]);
     printf("          - allocation of memory on the device -> %.6f seconds\n",timeGPU[1]);
@@ -193,6 +193,7 @@ int main()
     FILE *inputFile = fopen("input", "w");
     FILE *cpuFile = fopen("cpu-yest", "w");
     FILE *gpuFile = fopen("gpu-yest", "w");
+    FILE *resultFile = fopen("results", "w");
 
     if(cpuFile == NULL || gpuFile == NULL) {
         printf("ficheiro não pode ser criado\n");
@@ -208,18 +209,27 @@ int main()
     float avgerror=0;
     for (size_t i = 0; i < N; i++)
     {
-        if (yest[i] != yestCPU[i])
+        if (yest[i] >  yestCPU[i]+0.000001 || yest[i] < 
+yestCPU[i]-0.000001)
         {
             errors++;
             avgerror +=  abs(yestCPU[i]-yest[i]);
         }
     }    
 
+    fprintf(resultFile, "CPU: %.6f\nGPU: %.6f\n Speedup: %.3f\n", timeCPU, timeGPU[6], timeCPU/timeGPU[6]);
+
     if(errors)
-        printf("\nTest Failed:\n\t %d errors found! (out of %d points, %d%%)\n\t average error: %.20f\n", errors, N, errors*100/N, avgerror/errors);    
+    {
+	printf("Test Failed for %d%% of the points (%d). average error: %.8f\n", errors/N, errors, avgerror/N);
+	fprintf(resultFile, "Test Failed for %d%% of the points (%d). average error: %.8f\n", errors/N, errors, avgerror/N);
+    }
     else
-        printf("Test Passes\n");
-    
+    {
+        printf("Test Passed for %d points\n", N);
+        fprintf(resultFile, "Test Passed for %d points\n", N);
+    }
+
     free(x);
     free(y);
     free(yest);
@@ -233,6 +243,11 @@ int main()
         fprintf(stderr, "Failed to deinitialize the device! error=%s\n", cudaGetErrorString(err[0]));
         exit(EXIT_FAILURE);
     }
+    
+    fclose(inputFile);
+    fclose(cpuFile);
+    fclose(gpuFile);
+    fclose(resultFile);
 
     printf("Done\n");
     return 0;
